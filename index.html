@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PhantomBand</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Roboto Mono', 'monospace'],
+            display: ['Orbitron', 'sans-serif'],
+          },
+          colors: {
+            'base': {
+              '100': '#111827', // Dark Slate
+              '200': '#1a2233', // Lighter Slate (Cards)
+              '300': '#2c364a', // Controls Background
+            },
+            'primary': {
+              'amber': '#FFBF00', // Bright Amber/Gold
+              'amber-dark': '#d4a000',
+            },
+            'secondary': '#4b5563', // Muted Grey
+            'accent': '#FFBF00', // Use amber as accent as well
+            'text-main': '#e5e7eb',
+            'text-secondary': '#9ca3af',
+          },
+          backdropBlur: {
+            'xl': '24px',
+          }
+        },
+      },
+    }
+    </script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <style>
+      body {
+        background-color: #111827;
+        background-image: radial-gradient(at 10% 20%, hsla(215, 30%, 25%, 0.15) 0px, transparent 50%),
+                          radial-gradient(at 80% 90%, hsla(38, 100%, 50%, 0.1) 0px, transparent 50%);
+      }
+      .tactical-panel {
+        background: rgba(26, 34, 51, 0.7); /* base-200 with opacity */
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(75, 85, 99, 0.3); /* secondary with opacity */
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #111827;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #4b5563;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #6b7280;
+      }
+       /* Custom range input styles */
+      input[type=range] {
+        -webkit-appearance: none;
+        background: transparent;
+        cursor: pointer;
+        width: 100%;
+      }
+      input[type=range]:focus {
+        outline: none;
+      }
+      /* Track */
+      input[type=range]::-webkit-slider-runnable-track {
+        height: 4px;
+        background: #2c364a;
+        border-radius: 2px;
+      }
+      input[type=range]::-moz-range-track {
+        height: 4px;
+        background: #2c364a;
+        border-radius: 2px;
+      }
+      /* Thumb */
+      input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 16px;
+        width: 16px;
+        background: #FFBF00; /* primary-amber */
+        border-radius: 50%;
+        border: 2px solid #111827;
+        margin-top: -6px; /* Centers thumb on track */
+        transition: transform 0.2s;
+      }
+      input[type=range]::-moz-range-thumb {
+        height: 12px;
+        width: 12px;
+        background: #FFBF00;
+        border-radius: 50%;
+        border: 2px solid #111827;
+      }
+       input[type=range]:hover::-webkit-slider-thumb {
+        transform: scale(1.2);
+      }
+      /* Fieldset and Legend styles */
+      .control-fieldset {
+        border: 1px solid rgba(75, 85, 99, 0.3); /* secondary with opacity */
+        border-radius: 0.375rem; /* rounded-md */
+        padding: 1rem;
+        padding-top: 0.5rem;
+      }
+      .control-legend {
+        padding: 0 0.5rem;
+        font-size: 0.75rem; /* text-xs */
+        font-weight: 700;
+        color: #9ca3af; /* text-secondary */
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      /* Simple fade-in animation for accordion content */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.3s ease-out forwards;
+      }
+      /* Added for tab button styling and spacing */
+      .tab-button {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        border-bottom: 3px solid transparent;
+        color: #9ca3af; /* text-secondary */
+        display: flex;
+        align-items: center;
+        transition: all 0.2s ease-in-out;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+      .tab-button:hover {
+        color: #e5e7eb; /* text-main */
+      }
+      .tab-button-active {
+        color: #FFBF00; /* primary-amber */
+        border-bottom-color: #FFBF00;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "recharts": "https://aistudiocdn.com/recharts@^3.2.0",
+    "@tensorflow/tfjs": "https://aistudiocdn.com/@tensorflow/tfjs@^4.17.0",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
+    "remark-gfm": "https://aistudiocdn.com/remark-gfm@^4.0.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-base-100 text-text-main font-sans">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
