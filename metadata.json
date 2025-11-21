@@ -1,5 +1,5 @@
 {
-  "name": "Copy of Generative RF Environment Simulator",
+  "name": "PhantomBand V2",
   "description": "A generative AI/ML system that simulates realistic Radio Frequency (RF) environments for cyber deception. Upload real RF data to generate synthetic datasets that mimic real-world conditions like signal strength, noise, and interference.",
   "requestFramePermissions": []
 }
