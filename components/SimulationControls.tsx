@@ -1,9 +1,7 @@
 import React from 'react';
 import { FileUpload } from './FileUpload';
-// Fix: Added .ts extension to module path.
-import type { SimulationParams, EnvironmentParams, FileAnalysisReport, AnalysisMode } from '../types.ts';
-// Fix: Added .ts extension to module path.
-import { EnvironmentType, InterferenceLevel, DeceptionTarget, SignalPropagationModel, AtmosphericCondition } from '../types.ts';
+import type { SimulationParams, EnvironmentParams, FileAnalysisReport, AnalysisMode } from '../types';
+import { EnvironmentType, InterferenceLevel, DeceptionTarget, SignalPropagationModel, AtmosphericCondition } from '../types';
 
 interface SimulationControlsProps {
   params: SimulationParams;

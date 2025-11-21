@@ -1,5 +1,4 @@
-// Fix: Added .ts extension to module path.
-import { SimulationParams, EnvironmentType, InterferenceLevel, DeceptionTarget, SignalPropagationModel, AtmosphericCondition } from './types.ts';
+import { SimulationParams, EnvironmentType, InterferenceLevel, DeceptionTarget, SignalPropagationModel, AtmosphericCondition } from './types';
 
 export const INITIAL_SIMULATION_PARAMS: SimulationParams = {
   environment: {

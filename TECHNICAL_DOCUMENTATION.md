@@ -1,96 +1,142 @@
-# PhantomBand: Technical Architecture & Component Specification
-**Version 2.0 (TensorFlow.js Implementation)**
+# PhantomBand Technical Documentation
+**Version 2.0 - Deterministic Physics Engine Implementation**
 
 ---
 
 ## 1. Introduction
 
-### 1.1. Executive Summary
-PhantomBand is a browser-based Electronic Warfare (EW) simulation and analysis platform. Version 2.0 marks a paradigm shift from probabilistic Generative AI (LLMs) to a **Deterministic Physics Engine** powered by **TensorFlow.js**. This architecture ensures that all signal generation and analysis are mathematically rigorous, reproducible, and performed entirely client-side (Air-Gapped).
+**PhantomBand** is a browser-based simulation and analysis tool designed for Electronic Warfare (EW) practitioners. Version 2.0 represents a fundamental architectural shift from probabilistic Large Language Models (LLMs) to a **Deterministic Physics Engine** powered by **TensorFlow.js**.
 
-### 1.2. The "Model" Defined
-PhantomBand does not use a neural network trained on datasets. Instead, it utilizes a **Procedural Physics Graph**.
-*   **Definition:** A computational graph where nodes represent physical equations (Maxwell’s Equations, Friis Transmission, Gaussian Noise) rather than learned weights.
-*   **Advantages:**
-    *   **Determinism:** Same inputs = Exact same signal output.
-    *   **Accuracy:** No "hallucinations." Signals adhere to defined RF physics.
-    *   **Performance:** Operations are vectorized and executed on the GPU via WebGL.
+This document details the mathematical models, component architecture, and signal processing logic that drives the application. Unlike "Black Box" AI, PhantomBand's signal generation is fully transparent, reproducible, and grounded in standard Radio Frequency (RF) physics equations.
+
+### 1.1 The "Model" (PB-DSP-v1)
+The core of PhantomBand is the **PhantomBand Procedural DSP Graph (PB-DSP-v1)**.
+*   **Type:** Procedural Computational Graph (Differentiable Programming).
+*   **Implementation:** TensorFlow.js (WebGL Backend).
+*   **Training:** None. The model is **calibrated** using constants from Maxwell’s Equations, ITU-R P.372-14 (Radio Noise), and propagation models (Friis, Hata).
+*   **Function:** It accepts environmental parameters as inputs and outputs 1D tensors representing power spectral density.
 
 ---
 
 ## 2. System Architecture
 
-The application follows a unidirectional data flow architecture, orchestrated by React and powered by TensorFlow.js.
+The application utilizes a unidirectional data flow managed by React, with heavy computational lifting offloaded to the GPU via TensorFlow.js.
+
+<div align="center">
+<h3>Figure 1: PhantomBand System Architecture</h3>
 
 ```mermaid
-graph LR
-    Input[User/File] --> React[App Component]
-    React --> TF[TensorFlow Service]
-    TF --> GPU[WebGL Backend]
-    GPU -- Tensors --> TF
-    TF -- JSON/Arrays --> Visualizer[Recharts]
-    TF -- Text --> Narrative[Template Engine]
+graph TD
+    User[User Input / File Upload] --> App[App.tsx Orchestrator]
+    App --> CSV[CPU: CSV Parser Service]
+    App --> TF[GPU: TensorFlow.js Service]
+    
+    subgraph "Physics Engine (PB-DSP-v1)"
+        TF --> Env[Env Noise Generator]
+        TF --> Prop[Propagation Logic]
+        TF --> Attack[Attack Vector Synthesis]
+        Env --> Tensor[Combined Signal Tensor]
+        Prop --> Tensor
+        Attack --> Tensor
+    end
+    
+    Tensor --> Anomaly[Anomaly Detector (3-Sigma)]
+    Anomaly --> Narrative[Heuristic Narrative Engine]
+    Tensor --> Viz[Data Visualizer (Recharts)]
 ```
+</div>
 
 ---
 
-## 3. Component Deep Dive
+## 3. Component Analysis
 
-### 3.1. `App.tsx` (The Orchestrator)
-*   **Role:** Manages application state, routing between "Generate" and "Analyze" modes, and handles the asynchronous loading of the TensorFlow backend.
-*   **Key Logic:**
-    *   Maintains the `History` state in `localStorage`.
-    *   Handles file uploads via `FileAnalysisReport` state.
-    *   Triggers `generateDeceptionScenario` and manages the loading spinner.
+### 3.1. `App.tsx` (Application Orchestrator)
+The root component responsible for state management and high-level routing between "Generate" and "Analyze" modes.
+*   **Function:** It holds the `AnalysisResult` state and triggers the async `generateDeceptionScenario` function in the TF service.
+*   **State Management:** It manages the `History` array, persisting up to 50 simulation runs in `localStorage`.
 
-### 3.2. `services/tfService.ts` (The Physics Engine)
-This is the core logic module replacing the previous AI service.
+### 3.2. `SimulationControls.tsx` (Input Layer)
+Provides the interface for user parameter selection.
+*   **Inputs:** Environment Type, Propagation Model, Atmospheric Conditions, Interference Level.
+*   **Logic:** Validates inputs and passes a typed `SimulationParams` object to the App.
 
-*   **`generateBaselineNoise(env, interference)`**:
-    *   **Math:** $N(f) \sim \mathcal{N}(\mu_{env}, \sigma_{int}^2)$
-    *   **Implementation:** Uses `tf.randomNormal` to generate a tensor representing the noise floor. The Mean ($\mu$) and Standard Deviation ($\sigma$) are adjusted based on the `EnvironmentType` (e.g., Urban environments have higher $\mu$ and $\sigma$).
+### 3.3. `DataVisualizer.tsx` (Spectral Scope)
+Renders the mathematical output of the TensorFlow engine.
+*   **Spectrum View:** Displays the raw Power vs. Frequency data points.
+*   **FFT View:** Performs a client-side Fast Fourier Transform (Recursive Cooley-Tukey algorithm) to visualize signal magnitude buckets.
+*   **Windowing:** Applies Hamming, Hann, or Rectangular windows to the signal before FFT processing to reduce spectral leakage.
 
-*   **`generateAttackSignal(target, freqAxis)`**:
-    *   **GPS Spoofing:** Creates a narrowband mask at 1575.42 MHz using `tf.less` and `tf.abs`. Injects a low-power signal (-75 dBm).
-    *   **Jamming:** Creates a wideband mask and injects high-variance noise using `tf.randomNormal` with a high standard deviation.
-    *   **Rogue AP:** Uses a modulo operator on the timestep `t` to simulate the pulsing nature of a Wi-Fi beacon frame (100ms interval).
+### 3.4. `StatusBar.tsx` (Telemetry)
+Displays the active simulation parameters.
+*   **Logic:** Calculates total duration of uploaded files or displays the active presets (e.g., "Urban / Hata Model").
 
-*   **`generateNarrative()` (Heuristic Engine)**:
-    *   Replaces the LLM.
-    *   **Logic:** Takes the output of the anomaly detection (e.g., "Peak at 1575 MHz") and maps it to a pre-defined tactical template string. This ensures the text always matches the data.
-
-### 3.3. `utils/csvParser.ts` (Data Ingestion)
-*   **Role:** Parses raw CSV/TXT files on the client CPU before sending stats to the GPU.
-*   **Logic:**
-    *   **Column Detection:** Heuristically scores headers to find "Frequency" and "Power" columns.
-    *   **Parsing:** Converts strings to floats, handles scientific notation and units (MHz, dBm).
-    *   **Stats Calculation:** Computes Min, Max, and Avg values to scale the TensorFlow visualization correctly.
-
-### 3.4. `DataVisualizer.tsx` (The Scope)
-*   **Waterfall View:** Renders the `SpectrumDataPoint[]` array derived from the tensors.
-*   **FFT View:** Performs a Fast Fourier Transform on the signal data to show frequency domain characteristics.
-    *   **Note:** Since our TF engine generates frequency domain data directly, the FFT view here serves to visualize the *magnitude* distribution of the generated tensors.
+### 3.5. `DeceptionScenario.tsx` (Narrative Display)
+Renders the text generated by the Heuristic Engine.
+*   **Features:** Supports Markdown rendering for structured reports and includes a specific "Threat Assessment" block for highlighting detected anomalies.
 
 ---
 
-## 4. Analysis Workflow: How it Works
+## 4. Physics Simulation Logic (TensorFlow.js)
 
-When a user uploads a file, the following pipeline executes:
+The `services/tfService.ts` module contains the mathematical definitions for the RF environment.
 
-1.  **Ingestion (CPU):** `csvParser` reads the file, identifying $P_{min}, P_{max}, F_{start}, F_{end}$.
-2.  **Reconstruction (GPU):** `tfService` creates a `freqAxis` tensor matching the file's range.
-3.  **Injection:** It generates a baseline noise tensor and injects the specific peaks found in the CSV file into the tensor at the correct indices.
-4.  **Moment Analysis:**
-    *   Calculate Tensor Mean: $\mu = \frac{1}{N} \sum x_i$
-    *   Calculate Tensor Variance: $\sigma^2 = \frac{1}{N} \sum (x_i - \mu)^2$
-5.  **Anomaly Detection (3-Sigma Rule):**
-    *   Threshold $T = \mu + 3\sigma$
-    *   The engine scans the tensor: `tf.greater(powerTensor, threshold)`.
-    *   Any frequency bin exceeding $T$ is flagged as an **Anomaly**.
-6.  **Reporting:** The flagged frequencies are passed to `generateNarrative`, which classifies them (e.g., if Freq ~= 1575, classify as "L1 Band Anomaly").
+### 4.1. Environment Simulation
+The baseline noise floor is generated using the equation:
+$$ N(f) = \mu_{env} + \sigma_{env} \cdot \mathcal{N}(0, 1) $$
+Where:
+*   $\mathcal{N}(0, 1)$ is a standard normal distribution generated by `tf.randomNormal`.
+*   $\mu_{env}$ (Mean) and $\sigma_{env}$ (StdDev) are derived from the **Environment Type**:
+    *   **Urban:** High mean (+20dB), High variance (due to multipath).
+    *   **Rural:** Low mean (+2dB), Low variance (thermal noise dominant).
+    *   **Maritime:** Moderate mean, Low blocking.
+
+### 4.2. Propagation Models
+Signal strength of simulated attacks is attenuated based on the user-selected **Signal Propagation Model**:
+
+1.  **Free Space Path Loss (FSPL):**
+    $$ L_{dB} = 20\log_{10}(d) + 20\log_{10}(f) - 147.55 $$
+    Implemented as an Inverse Square Law decay ($1/d^2$).
+
+2.  **Hata Model (Urban):**
+    Adds correction factors for city density and antenna height. PhantomBand approximates this by increasing the path loss exponent $n$ from 2.0 to 3.5.
+
+3.  **Atmospheric Attenuation:**
+    Additional loss is applied to the tensor based on **Atmospheric Conditions**:
+    *   **Rain:** Substantial attenuation due to scattering/absorption.
+    *   **Fog/Snow:** Moderate attenuation.
+    *   **Clear:** Zero additional loss.
+
+### 4.3. Attack Vector Synthesis
+Attacks are generated procedurally:
+
+*   **GPS Spoofing:** A mask is created at 1575.42 MHz using `tf.less`. A narrowband signal is injected.
+*   **Jamming:** A high-variance Gaussian noise tensor is added to the baseline noise tensor over a wide bandwidth.
+*   **Rogue AP:** Uses `step % 2` logic to simulate the temporal periodicity of 802.11 Beacon Frames.
 
 ---
 
-## 5. Conclusion
+## 5. Anomaly Detection Model
 
-The migration to TensorFlow.js transforms PhantomBand from a creative writing tool into a **scientific simulation instrument**. By grounding the signal generation in Maxwell's equations and ITU standards, and performing anomaly detection using rigorous statistical moments on the GPU, PhantomBand v2.0 offers military-grade accuracy with the security of air-gapped, client-side execution.
+PhantomBand v2.0 uses **Statistical Moment Analysis** rather than AI pattern matching.
+
+1.  **Tensor Statistics:** The engine computes the Mean ($\mu$) and Standard Deviation ($\sigma$) of the entire power tensor on the GPU.
+2.  **Thresholding:**
+    $$ T = \mu + 3\sigma $$
+3.  **Detection:**
+    Any frequency bin $f_i$ where $Power(f_i) > T$ is flagged as an anomaly.
+4.  **Classification:**
+    The detected frequency is cross-referenced against known band plans (e.g., 1575 MHz = GPS, 2.4 GHz = WiFi) to assign a text classification.
+
+---
+
+## 6. Workflow Conclusion
+
+When a user clicks "Run Analysis":
+1.  **Allocation:** Memory is allocated on the WebGL backend.
+2.  **Generation:** Tensors are populated using the Physics Calibration Constants.
+3.  **Processing:** Signal math (Addition, Multiplication) creates the final spectrum.
+4.  **Detection:** The 3-Sigma algorithm identifies outliers.
+5.  **Narrative:** The Heuristic Engine converts the math results into a tactical report.
+6.  **Cleanup:** `tf.tidy()` disposes of all tensors to prevent memory leaks.
+
+This architecture ensures **100% reliability** and **zero hallucinations**, making PhantomBand a robust tool for technical training and analysis.

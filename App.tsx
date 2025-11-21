@@ -8,7 +8,7 @@ import { HistoryPanel } from './components/HistoryPanel';
 import { Loader } from './components/Loader';
 import { SettingsIcon } from './components/icons/SettingsIcon';
 import { HistoryIcon } from './components/icons/HistoryIcon';
-// Switched to TensorFlow Service
+// CHANGED: Now importing from tfService instead of geminiService
 import { generateDeceptionScenario } from './services/tfService';
 import { parseAndAnalyzeCsv } from './utils/csvParser';
 import { INITIAL_SIMULATION_PARAMS } from './constants';
