@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
-import { DeceptionTarget, EnvironmentType, InterferenceLevel, SignalPropagationModel, AtmosphericCondition } from '../types';
-import type { SimulationParams, AnalysisResult, FileAnalysisReport, SpectrumDataPoint, Anomaly } from '../types';
+import { DeceptionTarget, EnvironmentType, InterferenceLevel, SignalPropagationModel, AtmosphericCondition } from '../types.ts';
+import type { SimulationParams, AnalysisResult, FileAnalysisReport, SpectrumDataPoint, Anomaly } from '../types.ts';
 
 // --- TENSORFLOW MODEL ARCHITECTURE: PhantomBand Procedural DSP Graph (PB-DSP-v1) ---
 //

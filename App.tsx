@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Header } from './components/Header';
-import { SimulationControls } from './components/SimulationControls';
-import { DeceptionScenario } from './components/DeceptionScenario';
-import { DataVisualizer } from './components/DataVisualizer';
-import { StatusBar } from './components/StatusBar';
-import { HistoryPanel } from './components/HistoryPanel';
-import { Loader } from './components/Loader';
-import { SettingsIcon } from './components/icons/SettingsIcon';
-import { HistoryIcon } from './components/icons/HistoryIcon';
+import { Header } from './components/Header.tsx';
+import { SimulationControls } from './components/SimulationControls.tsx';
+import { DeceptionScenario } from './components/DeceptionScenario.tsx';
+import { DataVisualizer } from './components/DataVisualizer.tsx';
+import { StatusBar } from './components/StatusBar.tsx';
+import { HistoryPanel } from './components/HistoryPanel.tsx';
+import { Loader } from './components/Loader.tsx';
+import { SettingsIcon } from './components/icons/SettingsIcon.tsx';
+import { HistoryIcon } from './components/icons/HistoryIcon.tsx';
 // CHANGED: Now importing from tfService instead of geminiService
-import { generateDeceptionScenario } from './services/tfService';
-import { parseAndAnalyzeCsv } from './utils/csvParser';
-import { INITIAL_SIMULATION_PARAMS } from './constants';
-import type { SimulationParams, AnalysisResult, HistoryItem, FileAnalysisReport, AnalysisMode, TimeStats } from './types';
-import { DeceptionTarget } from './types';
+import { generateDeceptionScenario } from './services/tfService.ts';
+import { parseAndAnalyzeCsv } from './utils/csvParser.ts';
+import { INITIAL_SIMULATION_PARAMS } from './constants.ts';
+import type { SimulationParams, AnalysisResult, HistoryItem, FileAnalysisReport, AnalysisMode, TimeStats } from './types.ts';
+import { DeceptionTarget } from './types.ts';
 
 // The maximum size of a file segment to analyze in memory.
 export const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB

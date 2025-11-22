@@ -22,9 +22,6 @@ The core of PhantomBand is the **PhantomBand Procedural DSP Graph (PB-DSP-v1)**.
 
 The application utilizes a unidirectional data flow managed by React, with heavy computational lifting offloaded to the GPU via TensorFlow.js.
 
-<div align="center">
-<h3>Figure 1: PhantomBand System Architecture</h3>
-
 ```mermaid
 graph TD
     User[User Input / File Upload] --> App[App.tsx Orchestrator]
@@ -44,7 +41,6 @@ graph TD
     Anomaly --> Narrative[Heuristic Narrative Engine]
     Tensor --> Viz[Data Visualizer (Recharts)]
 ```
-</div>
 
 ---
 
