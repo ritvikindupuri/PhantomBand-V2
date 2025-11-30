@@ -1,5 +1,12 @@
+<div align="center">
+
 # PhantomBand Technical Documentation
-**Version 2.2 - Deterministic Generative Physics Architecture**
+### Version 2.2 - Deterministic Generative Physics Architecture
+
+**By: Ritvik Indupuri**  
+**Date: October 2025**
+
+</div>
 
 ---
 
@@ -175,7 +182,15 @@ When a user uploads a file, the following exact sequence occurs:
 
 ## 7. Conclusion
 
-PhantomBand V2.0 replaces uncertainty with physics. By leveraging **TensorFlow.js**, we deliver a tool that is:
-1.  **Faster:** No network latency; runs on GPU.
-2.  **Safer:** Air-gapped by design.
-3.  **Correct:** Calibrated on Maxwell's Equations, not hallucinated text.
+PhantomBand V2.0 represents a definitive step forward in decentralized, privacy-first defense simulation. By decoupling the simulation engine from cloud providers and embedding the laws of physics directly into the client-side execution graph, we have achieved a system that is:
+
+1.  **Deterministic & Verifiable:**
+    Unlike probabilistic LLMs which may "hallucinate" plausible but incorrect RF data, the **PB-DSP-v1** model is constrained by Maxwell’s equations. Every signal generated can be mathematically traced back to a specific propagation constant or environmental variable. This makes the tool suitable for rigorous training exercises where physical accuracy is paramount.
+
+2.  **Security-Hardened (Air-Gapped):**
+    The shift to **TensorFlow.js** ensures that **zero data exfiltration** occurs. Sensitive RF logs uploaded for analysis are processed entirely within the user's volatile memory (RAM) and GPU. This architectural decision makes PhantomBand capable of operating in classified or restrictive network environments without modification.
+
+3.  **High-Performance & Scalable:**
+    Leveraging WebGL for tensor operations allows the application to handle massive datasets and perform real-time FFTs (Fast Fourier Transforms) at 60 frames per second on commodity hardware, removing the need for expensive backend GPU clusters.
+
+In summary, this documentation outlines a robust, physics-compliant architecture that bridges the gap between theoretical electromagnetic models and accessible, interactive simulation tools. It serves as a foundational platform for next-generation Signals Intelligence (SIGINT) training and Electronic Warfare (EW) scenario planning.
