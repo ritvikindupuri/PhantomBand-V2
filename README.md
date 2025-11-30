@@ -1,54 +1,84 @@
-# PhantomBand: Deterministic Tensor-Based RF Threat Simulation
+# PhantomBand V2: Deterministic RF Threat Simulation
 
-**PhantomBand** is a secure, air-gapped, client-side platform for Electronic Warfare (EW) training and Signals Intelligence (SIGINT) analysis. 
+**PhantomBand** is a secure, air-gapped, client-side platform for Electronic Warfare (EW) training and Signals Intelligence (SIGINT) analysis.
 
-Replacing traditional probabilistic AI with a **Deterministic Physics Engine (TensorFlow.js)**, PhantomBand generates mathematically accurate RF environments and detects anomalies using rigorous statistical analysis—all within the browser. No data leaves the local machine.
-
----
-
-## Core Architecture: The Physics Engine
-
-PhantomBand utilizes the **PhantomBand Procedural DSP Graph (PB-DSP-v1)** implemented in TensorFlow.js.
-
-1.  **Simulation Mode (Digital Adversary):**
-    *   **Input:** Operational parameters (Environment Type, Atmospheric Conditions, Propagation Models).
-    *   **Process:** The engine calculates path loss using the **Friis Transmission Equation** and **Hata Model**. It generates noise floors using Gaussian distributions calibrated to **ITU-R P.372** recommendations.
-    *   **Output:** Complex signal representations of attacks (GPS Spoofing, Jamming) injected into the noise floor with physics-compliant attenuation.
-
-2.  **Analysis Mode (SIGINT Analyst):**
-    *   **Input:** Raw CSV/TXT RF data logs.
-    *   **Process:** Data is loaded into GPU-accelerated tensors. The engine performs moment analysis (Mean, Variance, StdDev) to detect **3-Sigma outliers**.
-    *   **Output:** Statistical anomaly reports and heuristic tactical narratives.
+Unlike traditional AI wrappers, PhantomBand utilizes a **Generative Physics Model (PB-DSP-v1)** running entirely in the browser via TensorFlow.js. It procedurally generates mathematically accurate RF environments and detects anomalies using rigorous statistical analysis—without sending data to the cloud.
 
 ---
 
-## Key Features
+## 🚀 Getting Started
 
-### 1. Physics-Grade Accuracy
-Outputs are derived from standard RF equations, not LLM hallucinations.
-*   **GPS Spoofing:** Modeled as narrowband signals centered at 1575.42 MHz.
-*   **Jamming:** Modeled as high-entropy wideband Gaussian noise.
-*   **Atmospheric Attenuation:** Simulates signal loss due to Rain, Fog, or Snow.
+Follow these instructions to set up the project locally.
 
-### 2. Air-Gapped Security
-*   **Client-Side Execution:** All math runs in the user's browser via WebGL.
-*   **Zero Data Exfiltration:** Sensitive RF logs are parsed and analyzed locally.
+### Prerequisites
+*   **Node.js**: Version 18.0.0 or higher
+*   **Package Manager**: npm (v9+) or yarn
 
-### 3. Instant Performance
-*   **GPU Acceleration:** Leveraging WebGL for massive parallel computation of signal tensors and FFTs.
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/organization/phantom-band.git
+    cd phantom-band
+    ```
+
+2.  **Install Dependencies**
+    ```bash
+    npm install
+    ```
+
+3.  **Start Development Server**
+    ```bash
+    npm run dev
+    ```
+    The application will launch automatically at `http://localhost:5173`.
+
+### Building for Production
+
+To create a production-ready build (outputs to `/dist`):
+
+```bash
+npm run build
+```
 
 ---
 
-## Technology Stack
+## 🛠️ Technology Stack
 
-*   **Core Engine:** TensorFlow.js (`@tensorflow/tfjs`)
-*   **Frontend:** React 18, TypeScript
-*   **Visualization:** Recharts (Waterfall & Spectral plotting)
-*   **Styling:** Tailwind CSS
+PhantomBand is built on a modern, type-safe stack designed for high-performance client-side computation.
+
+*   **Core Physics Engine**: [TensorFlow.js](https://www.tensorflow.org/js) (WebGL-accelerated DSP)
+*   **Frontend Framework**: [React 18](https://react.dev/)
+*   **Language**: [TypeScript](https://www.typescriptlang.org/)
+*   **Build Tool**: [Vite](https://vitejs.dev/)
+*   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+*   **Visualization**: [Recharts](https://recharts.org/) (D3-based wrappers)
 
 ---
 
-## Usage
+## 📚 Documentation Structure
 
-1.  **Generate Scenario:** Select an environment and a threat (e.g., "Simulate Rogue Wi-Fi AP"). The engine procedurally generates the signal patterns.
-2.  **Analyze File:** Upload a generic CSV of RF data (Frequency, Power). The engine parses it, reconstructs the tensor, and highlights statistical anomalies automatically.
+To keep information organized, documentation is split into two levels:
+
+1.  **README (This File)**: 
+    *   Focuses on **Deployment**, **Installation**, and **High-Level Usage**.
+    *   Intended for developers setting up the environment.
+
+2.  **[Technical Documentation (TECHNICAL_DOCUMENTATION.md)](./TECHNICAL_DOCUMENTATION.md)**: 
+    *   Focuses on **Physics Models**, **Architecture**, and **Math**.
+    *   Details the **PB-DSP-v1 Model** (Maxwell's Equations, Friis Transmission, ITU-R Standards).
+    *   Explains the 3-Sigma Anomaly Detection algorithm.
+    *   Intended for EW analysts and core engine contributors.
+
+---
+
+## 🛡️ Security & Privacy
+
+*   **Air-Gapped by Design**: All computations occur locally in the user's browser via WebGL.
+*   **Zero Data Exfiltration**: Uploaded CSV/TXT logs for analysis are parsed in memory and never transmitted to any external server.
+
+---
+
+## License
+
+MIT License - For educational and defensive simulation purposes only.

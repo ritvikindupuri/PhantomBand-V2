@@ -1,6 +1,6 @@
-// This service has been deprecated and replaced by services/tfService.ts
-// PhantomBand now uses a client-side deterministic TensorFlow.js engine.
-// This file is kept as a placeholder to ensure clean transition.
+// DEPRECATED
+// The Gemini Cloud API service has been removed in favor of the 
+// Client-Side TensorFlow.js Deterministic Physics Engine (tfService.ts).
 export const generateDeceptionScenario = async () => {
-    throw new Error("Gemini Service is deprecated. Please use tfService.");
+    throw new Error("Cloud AI service deprecated. Use local TensorFlow Physics Engine.");
 };

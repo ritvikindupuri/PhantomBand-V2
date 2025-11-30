@@ -8,9 +8,9 @@ import type { SimulationParams, AnalysisResult, FileAnalysisReport, SpectrumData
 // This is a Procedural Physics Graph (PPG) constructed using Differentiable Programming principles.
 // Unlike a Neural Network, it is not "trained" on a dataset of labeled examples.
 // Instead, it is "calibrated" using:
-// 1. Maxwell's Equations (Foundation of EM waves)
-// 2. ITU-R P.372-14 (Radio noise constants)
-// 3. Friis Transmission Equation (Path loss modeling)
+// 1. Maxwell's Equations (Fundamental Physics)
+// 2. ITU-R P.372-14 (International Radio Noise Standards)
+// 3. Friis Transmission Equation & Hata Model (Path Loss)
 //
 // EXECUTION ENVIRONMENT:
 // The graph is executed on the Client-Side GPU via WebGL using TensorFlow.js.
@@ -337,12 +337,7 @@ export const generateDeceptionScenario = async (
                 
                 let combined = noise;
                 if (attack) {
-                    // Additive superposition of signals
-                    // Power addition in linear domain is complex, here we approximate in log domain for visualization
-                    // Ideally: 10*log10(10^(P1/10) + 10^(P2/10))
-                    // Visual approximation: Max(noise, signal) often looks better for waterfalls, 
-                    // but tf.add works for overlaying energy.
-                    
+                    // Additive superposition of signals (Max hold visual approx)
                     // We use a mask to mix them. Where signal exists, use signal + noise.
                     const signalMask = tf.greater(attack.tensor, -120); // -120 is arbitrary cutoff
                     const signalWithNoise = tf.add(attack.tensor, noise);

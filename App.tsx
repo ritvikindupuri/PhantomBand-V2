@@ -111,6 +111,7 @@ const App: React.FC = () => {
         // Wait a brief moment to allow UI to update to loading state before blocking main thread with TFjs
         setTimeout(async () => {
              try {
+                // Use the new TF service
                 const result = await generateDeceptionScenario(currentParams, analysisContent);
                 setAnalysisResult(result);
                 if (result.timeStats) {

@@ -1,5 +1,5 @@
 # PhantomBand Technical Documentation
-**Version 2.1 - Deterministic Generative Physics Architecture**
+**Version 2.2 - Deterministic Generative Physics Architecture**
 
 ---
 
@@ -130,16 +130,23 @@ Instead of using a "Black Box" classifier, we use **Statistical Anomaly Detectio
 
 ---
 
-## 5. Component Breakdown & Data Flow
+## 5. Component Breakdown
 
-### 5.1. File Upload & Parsing (`csvParser.ts`)
-*   **Heuristic Column Detection:** The parser scans the first 50 lines of an uploaded CSV. It scores headers against a dictionary of keywords (e.g., "Freq", "MHz", "RSSI", "dBm").
-*   **Normalization:** It converts strings to floats, handles thousands separators, and normalizes units.
-*   **Output:** A structured `SpectrumDataPoint[]` array.
+### 5.1. File Processing Layer
+*   **`FileUpload.tsx`**: Handles Drag & Drop interactions. Implements client-side checks for file size limits (50MB chunks) to prevent browser crashes.
+*   **`csvParser.ts`**: The raw data ingestion engine.
+    *   *Heuristic Detection:* Scans the first 50 rows to automatically identify headers like "Freq", "MHz", "RSSI", "dBm".
+    *   *Normalization:* Converts various units (Hz to MHz, Watts to dBm) into a standardized internal format.
 
-### 5.2. Orchestrator (`App.tsx`)
-*   **State Machine:** Switches between `generate` (Simulation) and `analyze` (File Upload) modes.
-*   **History Management:** Persists the last 50 simulation states to `localStorage`.
+### 5.2. Core UI Components
+*   **`SimulationControls.tsx`**: The primary input interface. It modifies the `params` state which is fed directly into the TensorFlow graph. It dynamically toggles between "Generation Mode" and "Analysis Mode".
+*   **`DataVisualizer.tsx`**: The rendering engine.
+    *   *Spectrum View:* Renders a LineChart of Power (dBm) vs Frequency.
+    *   *FFT View:* Performs a client-side Fast Fourier Transform to show signal magnitude buckets.
+    *   *Optimization:* Uses React Virtual DOM to efficiently update 512+ data points at 60fps.
+*   **`DeceptionScenario.tsx`**: The narrative display. It takes the *outputs* of the anomaly detector and formats them into a readable "Tactical Report" using Markdown. It includes a "Threat Assessment" block that highlights detected countermeasures.
+*   **`StatusBar.tsx`**: A persistent dashboard footer that displays the active configuration (Environment type, Interference level) or analysis stats (Time range, Duration) so the user always has context.
+*   **`HistoryPanel.tsx`**: Maintains a local session history (stored in `localStorage`) allowing users to click and revert to previous simulation states instantly.
 
 ### 5.3. Physics Service (`tfService.ts`)
 The "Brain" of the application.
@@ -147,17 +154,6 @@ The "Brain" of the application.
     *   *GPS Spoofing:* Generates a narrowband `sinc` function at 1575.42 MHz.
     *   *Jamming:* Generates a high-entropy (high variance) Gaussian noise block over a wide bandwidth.
     *   *Rogue AP:* Uses modulo arithmetic on the `step` counter to simulate the temporal periodicity of Wi-Fi beacon frames.
-
-### 5.4. Visualizer (`DataVisualizer.tsx`)
-*   **WebGL Rendering:** Uses `Recharts` (backed by React Virtual DOM) to render high-frequency data at 60fps.
-*   **FFT Implementation:** Includes a pure TypeScript implementation of the **Recursive Cooley-Tukey FFT algorithm** to transform Time-Domain inputs into Frequency-Domain histograms if needed.
-
-### 5.5. Heuristic Narrative Engine
-Since we removed the LLM, narratives are now deterministic.
-*   **Logic:** It accepts the list of anomalies detected by the Tensor engine.
-*   **Templates:** It fills predefined tactical templates.
-    *   *Input:* `Anomaly { freq: 1575, type: "Narrowband" }`
-    *   *Template:* "Warning: Narrowband signal detected at [FREQ]. Classification: [TYPE]. Countermeasure: Switch to M-Code."
 
 ---
 

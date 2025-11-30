@@ -13,4 +13,5 @@ export const INITIAL_SIMULATION_PARAMS: SimulationParams = {
 };
 
 // The maximum size of a file segment to analyze in memory.
+// Moved here to prevent circular dependencies.
 export const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
