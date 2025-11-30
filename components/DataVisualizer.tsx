@@ -12,11 +12,11 @@ import {
   Legend,
   ReferenceArea
 } from 'recharts';
-import type { TimestepData, TimeStats } from '../types';
-import { PlayIcon } from './icons/PlayIcon';
-import { PauseIcon } from './icons/PauseIcon';
-import { ChartBarIcon } from './icons/ChartBarIcon';
-import { Loader } from './Loader';
+import type { TimestepData, TimeStats } from '../types.ts';
+import { PlayIcon } from './icons/PlayIcon.tsx';
+import { PauseIcon } from './icons/PauseIcon.tsx';
+import { ChartBarIcon } from './icons/ChartBarIcon.tsx';
+import { Loader } from './Loader.tsx';
 
 // --- FFT and DSP Utilities ---
 type Complex = { re: number; im: number };
@@ -90,7 +90,6 @@ export const DataVisualizer: React.FC<DataVisualizerProps> = ({
     const totalTimesteps = visualizerData?.length || 0;
 
     useEffect(() => {
-        // Fix: Replaced NodeJS.Timeout with ReturnType<typeof setInterval> for browser compatibility.
         let interval: ReturnType<typeof setInterval>;
         if (isPlaying && totalTimesteps > 1) {
             interval = setInterval(() => {

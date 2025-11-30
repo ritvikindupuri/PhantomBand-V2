@@ -1,7 +1,7 @@
 import React from 'react';
-import { FileUpload } from './FileUpload';
-import type { SimulationParams, EnvironmentParams, FileAnalysisReport, AnalysisMode } from '../types';
-import { EnvironmentType, InterferenceLevel, DeceptionTarget, SignalPropagationModel, AtmosphericCondition } from '../types';
+import { FileUpload } from './FileUpload.tsx';
+import type { SimulationParams, EnvironmentParams, FileAnalysisReport, AnalysisMode } from '../types.ts';
+import { EnvironmentType, InterferenceLevel, DeceptionTarget, SignalPropagationModel, AtmosphericCondition } from '../types.ts';
 
 interface SimulationControlsProps {
   params: SimulationParams;
@@ -19,7 +19,7 @@ const SelectControl: React.FC<{
   label: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  options: string[]; // Changed from object to string array for easier filtering
+  options: string[]; 
   disabled?: boolean;
 }> = ({ label, value, onChange, options, disabled }) => (
   <div>

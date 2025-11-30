@@ -1,4 +1,4 @@
-import { SimulationParams, EnvironmentType, InterferenceLevel, DeceptionTarget, SignalPropagationModel, AtmosphericCondition } from './types';
+import { SimulationParams, EnvironmentType, InterferenceLevel, DeceptionTarget, SignalPropagationModel, AtmosphericCondition } from './types.ts';
 
 export const INITIAL_SIMULATION_PARAMS: SimulationParams = {
   environment: {
@@ -11,3 +11,6 @@ export const INITIAL_SIMULATION_PARAMS: SimulationParams = {
   timesteps: 5,
   customPrompt: '',
 };
+
+// The maximum size of a file segment to analyze in memory.
+export const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB

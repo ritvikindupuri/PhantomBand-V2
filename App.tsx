@@ -8,15 +8,11 @@ import { HistoryPanel } from './components/HistoryPanel.tsx';
 import { Loader } from './components/Loader.tsx';
 import { SettingsIcon } from './components/icons/SettingsIcon.tsx';
 import { HistoryIcon } from './components/icons/HistoryIcon.tsx';
-// CHANGED: Now importing from tfService instead of geminiService
 import { generateDeceptionScenario } from './services/tfService.ts';
 import { parseAndAnalyzeCsv } from './utils/csvParser.ts';
 import { INITIAL_SIMULATION_PARAMS } from './constants.ts';
 import type { SimulationParams, AnalysisResult, HistoryItem, FileAnalysisReport, AnalysisMode, TimeStats } from './types.ts';
 import { DeceptionTarget } from './types.ts';
-
-// The maximum size of a file segment to analyze in memory.
-export const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 const App: React.FC = () => {
     const [params, setParams] = useState<SimulationParams>(INITIAL_SIMULATION_PARAMS);
@@ -55,7 +51,7 @@ const App: React.FC = () => {
             setFileAnalysisError(null);
             setTimeStats(null);
             // If the current target is the analysis one, revert to default
-            if (params.deceptionTarget === DeceptionTarget.ANALYZE_UPLOADED_DATA) {
+            if (params.deceptionTarget === params.deceptionTarget && params.deceptionTarget === DeceptionTarget.ANALYZE_UPLOADED_DATA) {
                 setParams(p => ({ ...p, deceptionTarget: INITIAL_SIMULATION_PARAMS.deceptionTarget }));
             }
         } else { // mode === 'analyze'

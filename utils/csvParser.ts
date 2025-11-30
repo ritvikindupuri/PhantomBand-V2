@@ -1,4 +1,4 @@
-import type { FileAnalysisReport, SpectrumDataPoint } from '../types';
+import type { FileAnalysisReport, SpectrumDataPoint } from '../types.ts';
 
 /**
  * A custom error to signal that automatic column detection failed and manual selection is needed.

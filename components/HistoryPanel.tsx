@@ -1,6 +1,6 @@
 import React from 'react';
-import { HistoryIcon } from './icons/HistoryIcon';
-import type { HistoryItem } from '../types';
+import { HistoryIcon } from './icons/HistoryIcon.tsx';
+import type { HistoryItem } from '../types.ts';
 
 interface HistoryPanelProps {
     history: HistoryItem[];

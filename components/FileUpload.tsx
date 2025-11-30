@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FileCodeIcon } from './icons/FileCodeIcon';
-import type { FileAnalysisReport } from '../types';
-import { MAX_FILE_SIZE_BYTES } from '../App';
-import { ColumnDetectionError } from '../utils/csvParser';
+import { FileCodeIcon } from './icons/FileCodeIcon.tsx';
+import type { FileAnalysisReport } from '../types.ts';
+import { MAX_FILE_SIZE_BYTES } from '../constants.ts';
+import { ColumnDetectionError } from '../utils/csvParser.ts';
 
 
 type Segment = 'start' | 'middle' | 'end';
@@ -38,7 +38,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileChange, onRunFileA
 
 
   useEffect(() => {
-    // When a new file is uploaded or the error is cleared, reset manual selection
+    // When a file is uploaded or error is cleared, reset manual selection
     if (!analysisError || !uploadedFile) {
         setManualFreqIndex('');
         setManualPowerIndex('');

@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ClipboardIcon } from './icons/ClipboardIcon';
-import { Loader } from './Loader';
-import type { Anomaly } from '../types';
+import { ClipboardIcon } from './icons/ClipboardIcon.tsx';
+import { Loader } from './Loader.tsx';
+import type { Anomaly } from '../types.ts';
 
 interface DeceptionScenarioProps {
     scenario: string;

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { SimulationParams, TimeStats } from '../types';
+import type { SimulationParams, TimeStats } from '../types.ts';
 
 interface StatusBarProps {
     params: SimulationParams | null;
