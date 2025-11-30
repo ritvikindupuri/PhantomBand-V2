@@ -182,7 +182,7 @@ When a user uploads a file, the following exact sequence occurs:
 
 ## 7. Conclusion
 
-PhantomBand V2.0 represents a definitive step forward in decentralized, privacy-first defense simulation. By decoupling the simulation engine from cloud providers and embedding the laws of physics directly into the client-side execution graph, we have achieved a system that is:
+PhantomBand represents a definitive step forward in decentralized, privacy-first defense simulation. By decoupling the simulation engine from cloud providers and embedding the laws of physics directly into the client-side execution graph, we have achieved a system that is:
 
 1.  **Deterministic & Verifiable:**
     Unlike probabilistic LLMs which may "hallucinate" plausible but incorrect RF data, the **PB-DSP-v1** model is constrained by Maxwell’s equations. Every signal generated can be mathematically traced back to a specific propagation constant or environmental variable. This makes the tool suitable for rigorous training exercises where physical accuracy is paramount.
