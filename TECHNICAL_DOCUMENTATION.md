@@ -178,7 +178,7 @@ We employ **Statistical Moment Analysis** to detect anomalies:
 
 ## 7. Conclusion
 
-PhantomBand V2.0 represents a definitive step forward in decentralized, privacy-first defense simulation. 
+PhantomBand represents a definitive step forward in decentralized, privacy-first defense simulation. 
 
 By replacing probabilistic Cloud AI with the **PB-DSP-v1 Deterministic Physics Model**, the application achieves **100% verifiability**. It does not "guess" what a jamming signal looks like; it calculates it based on the laws of physics.
 
