@@ -194,7 +194,7 @@ export const SimulationControls: React.FC<SimulationControlsProps> = ({
                           />
                           <span className="text-sm font-semibold text-primary-amber w-8 text-center bg-base-300 rounded-md py-1">{params.timesteps}</span>
                       </div>
-                      <p className="text-xs text-text-secondary/70 mt-2">Defines the number of narrative steps the AI should generate to explain the data.</p>
+                      <p className="text-xs text-text-secondary/70 mt-2">Defines the number of narrative steps the Engine should generate to explain the data.</p>
                   </div>
               </fieldset>
           </div>

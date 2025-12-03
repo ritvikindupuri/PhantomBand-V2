@@ -1,6 +1,7 @@
 <div align="center">
 
 # PhantomBand Technical Documentation
+### Version 2.3 - Deterministic Generative Physics Architecture
 
 **By: Ritvik Indupuri**  
 **Date: October 2025**
@@ -13,7 +14,7 @@
 
 **PhantomBand** is a secure, browser-based Electronic Warfare (EW) simulation platform designed for defensive cyber training and Signals Intelligence (SIGINT) analysis.
 
-Unlike traditional AI wrappers that rely on probabilistic Large Language Models (LLMs) to generate text, PhantomBand utilizes a **Generative Physics Model (PB-DSP-v1)** running entirely in the client's browser via **TensorFlow.js**. This engine procedurally generates mathematically accurate RF environments, simulates complex attack vectors (GPS Spoofing, Jamming, Rogue APs), and performs rigorous statistical anomaly detection.
+At its core is **PB-DSP-v1 (PhantomBand Digital Signal Processing)**, a custom physics engine running entirely in the client's browser via **TensorFlow.js**. This engine procedurally generates mathematically accurate RF environments, simulates complex attack vectors (GPS Spoofing, Jamming, Rogue APs), and performs rigorous statistical anomaly detection.
 
 ### 1.1 Purpose
 The primary purpose of PhantomBand is to provide a **safe, air-gapped, and physically accurate** environment for analysts to:
@@ -25,25 +26,25 @@ The primary purpose of PhantomBand is to provide a **safe, air-gapped, and physi
 
 ## 2. Strategic Architecture: Why Not Traditional ML?
 
-During the design phase, we evaluated traditional Machine Learning approaches (Deep Neural Networks, XGBoost, Isolation Forests). We explicitly rejected them in favor of a **Procedural Physics Graph** for four critical engineering reasons.
+During the design phase, we evaluated traditional Machine Learning approaches (Deep Neural Networks, XGBoost, Isolation Forests). We explicitly rejected them in favor of the **PB-DSP-v1** architecture for four critical engineering reasons.
 
 ### 2.1 The "Ground Truth" Problem (Data Scarcity)
 *   **Traditional ML:** To train a classifier (e.g., MobileNet) to detect GPS Spoofing, one needs terabytes of labeled RF data containing real attacks. This data is extremely rare, often classified, and difficult to generate safely.
-*   **PhantomBand Approach:** We do not need a dataset. We know the equation for a GPS signal (a sine wave at 1575.42 MHz). By using physics equations, we can generate infinite, mathematically perfect examples without needing to hunt for a dataset that doesn't exist publicly.
+*   **PB-DSP-v1 Approach:** We do not need a dataset. We know the equation for a GPS signal (a sine wave at 1575.42 MHz). By using physics equations, we can generate infinite, mathematically perfect examples without needing to hunt for a dataset that doesn't exist publicly.
 
-### 2.2 Determinism vs. Hallucination
+### 2.2 Determinism vs. Hallucination (Probability vs. Calculation)
 *   **Traditional ML:** Neural Networks are **Probabilistic**. If asked to generate a "Jamming Signal," a GAN (Generative Adversarial Network) might output a waveform that *looks* like jamming but violates the laws of physics (e.g., negative power or impossible bandwidth). This is a "hallucination."
-*   **PhantomBand Approach:** Our model is **Deterministic**. It uses the **Friis Transmission Equation**. If the jammer is 10km away, the model calculates the *exact* decibel loss based on the inverse-square law. It is physically impossible for this model to hallucinate data.
+*   **PB-DSP-v1 Approach:** A neural network offers a *probability* of what a signal looks like. Our engine offers a *calculation*. It is **deterministic**. It uses the **Friis Transmission Equation**. If the jammer is 10km away, the model calculates the *exact* decibel loss based on the inverse-square law. It is physically impossible for this model to hallucinate data.
 
 ### 2.3 Generation vs. Detection (The Dual-Use Case)
 *   **Traditional ML:** Algorithms like **Isolation Forest** are excellent for detecting anomalies, but they cannot *generate* data. They can tell you "this signal is weird," but they cannot create a realistic "Red Team" attack scenario for training.
-*   **PhantomBand Approach:** Because we built a **Generative Physics Engine**, we get both capabilities:
+*   **PB-DSP-v1 Approach:** Because we built a **Generative Physics Engine**, we get both capabilities:
     1.  **Generation:** We use the math to create the signal for simulation.
     2.  **Detection:** We use the inverse of that math (3-Sigma analysis) to detect it in uploaded files.
 
 ### 2.4 Explainability (White Box vs. Black Box)
 *   **Traditional ML:** If a Deep Neural Network flags a signal as malicious, it is a "Black Box." It cannot explain *why* it made that decision.
-*   **PhantomBand Approach:** Our system is fully explainable. If PB-DSP-v1 detects an anomaly, it reports: *"Flagged because energy at 1575.42 MHz exceeded the Urban Noise Floor by 3 standard deviations."* In defense, knowing **why** is as important as knowing **what**.
+*   **PB-DSP-v1 Approach:** Our system is fully explainable. If PB-DSP-v1 detects an anomaly, it reports: *"Flagged because energy at 1575.42 MHz exceeded the Urban Noise Floor by 3 standard deviations."* In defense, knowing **why** is as important as knowing **what**.
 
 ---
 
@@ -88,12 +89,12 @@ graph TD
 
 ---
 
-## 4. The Model: PhantomBand PB-DSP-v1
+## 4. The Model: PB-DSP-v1
 
-The core intelligence is **PB-DSP-v1** (PhantomBand Digital Signal Processing, Version 1), located in `services/tfService.ts`.
+The core intelligence is **PB-DSP-v1**, located in `services/tfService.ts`.
 
 ### 4.1 Calibration Methodology
-The model is **Calibrated via Domain Knowledge Injection**. The "weights" are not learned; they are constants derived from engineering standards:
+The model is **Calibrated via Domain Knowledge Injection**. The "weights" are not learned from a dataset; they are constants derived from engineering standards:
 1.  **Maxwell’s Equations:** Governing electromagnetic wave propagation.
 2.  **ITU-R P.372-14:** A global radio standard defining background noise in Urban (-85 dBm) vs. Rural (-105 dBm) environments.
 3.  **GPS ICD-200:** Defines the center frequency (1575.42 MHz) and bandwidth of GPS L1 signals.
@@ -106,29 +107,44 @@ The model is **Calibrated via Domain Knowledge Injection**. The "weights" are no
 
 ---
 
-## 5. Mathematical Foundations
+## 5. Mathematical Foundations & Calibration
 
-### 5.1 Environmental Noise Generation
-We simulate the noise floor ($N$) using a Gaussian distribution shifted by environment constants.
+The PB-DSP-v1 model uses precise Lookup Tables (LUTs) to translate UI parameters into physics constants.
 
-$$ N(f) = \mu_{env} + \mathcal{I}_{gain} + (\sigma_{env} \cdot \mathcal{Z}) $$
+### 5.1 Environmental Noise Generation (ITU-R P.372)
+We simulate the noise floor ($N$) using a Gaussian distribution.
+$$ N(f) = \text{Baseline} + \mu_{env} + \mathcal{I}_{gain} + (\sigma_{env} \cdot \mathcal{Z}) $$
 
-*   $\mu_{env}$: Mean noise figure (e.g., Urban = -85 dBm).
-*   $\mathcal{I}_{gain}$: Interference level gain.
-*   $\sigma_{env}$: Standard deviation (multipath variance).
-*   $\mathcal{Z}$: Standard Normal Random Variable ($\mathcal{N}(0,1)$).
+| Environment | Mean Offset ($\mu$) | Std Dev ($\sigma$) | Physical Description |
+| :--- | :--- | :--- | :--- |
+| **Urban** | +20 dB | 6.0 | High man-made noise, multipath reflections. |
+| **Suburban** | +10 dB | 4.0 | Moderate density, typical residential noise. |
+| **Rural** | +2 dB | 2.0 | Quiet, thermal noise floor dominant. |
+| **Maritime** | +5 dB | 1.5 | Flat surface reflections, low blocking. |
+| **Airborne** | -2 dB | 1.0 | Line-of-sight dominant, very low noise. |
 
 ### 5.2 Signal Propagation (Path Loss)
-Received power ($P_{rx}$) is calculated using the Log-Distance Path Loss Model:
+Received power ($P_{rx}$) is calculated using the Log-Distance Path Loss Model.
+$$ P_{rx} = P_{tx} - 10 \cdot n \cdot \log_{10}(d) $$
+where $n$ is the **Path Loss Exponent**.
 
-$$ P_{rx} = P_{tx} - 10 \cdot n \cdot \log_{10}(d) - L_{atm} $$
+| Model Selection | Exponent ($n$) | Description |
+| :--- | :--- | :--- |
+| **Free Space** | 2.0 | Signal travels in a vacuum (perfect LOS). |
+| **Log-Distance** | 3.0 | Generic obstructed environment. |
+| **Hata Model** | 3.5 | Urban density, heavy signal absorption by buildings. |
 
-*   $P_{tx}$: Transmit Power (e.g., -60 dBm).
-*   $n$: Path Loss Exponent (Urban Hata $\approx$ 3.5, Free Space = 2.0).
-*   $d$: Relative distance.
-*   $L_{atm}$: Atmospheric Loss (Rain/Fog attenuation).
+### 5.3 Atmospheric Attenuation & Interference
+Interference adds chaotic gain and variance to the noise floor. Atmospheric conditions apply linear attenuation ($L_{atm}$).
 
-### 5.3 Anomaly Detection (3-Sigma)
+| Condition / Level | Value / Effect | Description |
+| :--- | :--- | :--- |
+| **Rainy** | -2.5 dB Loss | Absorption by water droplets. |
+| **Foggy** | -0.5 dB Loss | Minor scattering. |
+| **Interference (Severe)** | +25 dB Gain | Massive noise floor elevation. |
+| **Interference (Severe)** | 3.0x Variance | High-entropy jitter (chaotic waveform). |
+
+### 5.4 Anomaly Detection (3-Sigma)
 We employ **Statistical Moment Analysis** to detect anomalies:
 
 1.  **Calculate Moments:**
@@ -178,7 +194,7 @@ We employ **Statistical Moment Analysis** to detect anomalies:
 
 ## 7. Conclusion
 
-PhantomBand represents a definitive step forward in decentralized, privacy-first defense simulation. 
+PhantomBand V2.0 represents a definitive step forward in decentralized, privacy-first defense simulation. 
 
 By replacing probabilistic Cloud AI with the **PB-DSP-v1 Deterministic Physics Model**, the application achieves **100% verifiability**. It does not "guess" what a jamming signal looks like; it calculates it based on the laws of physics.
 

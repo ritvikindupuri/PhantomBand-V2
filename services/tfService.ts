@@ -5,152 +5,169 @@ import type { SimulationParams, AnalysisResult, FileAnalysisReport, SpectrumData
 // --- TENSORFLOW MODEL ARCHITECTURE: PhantomBand Procedural DSP Graph (PB-DSP-v1) ---
 //
 // MODEL DEFINITION:
-// This is a Procedural Physics Graph (PPG) constructed using Differentiable Programming principles.
-// Unlike a Neural Network, it is not "trained" on a dataset of labeled examples.
-// Instead, it is "calibrated" using:
-// 1. Maxwell's Equations (Fundamental Physics)
-// 2. ITU-R P.372-14 (International Radio Noise Standards)
-// 3. Friis Transmission Equation & Hata Model (Path Loss)
+// This is a Procedural Physics Graph (PPG).
+// It is "Calibrated" via Domain Knowledge Injection rather than "Trained" via Backpropagation.
 //
-// EXECUTION ENVIRONMENT:
-// The graph is executed on the Client-Side GPU via WebGL using TensorFlow.js.
-// This ensures determinism (physics doesn't guess) and security (no data leaves the browser).
+// CALIBRATION SOURCES:
+// 1. ITU-R P.372-14: Radio noise constants for specific environments.
+// 2. Log-Distance Path Loss Model: Derived from Friis Transmission Equation.
+// 3. AWGN (Additive White Gaussian Noise): Information theory entropy modeling.
 
-// --- 1. PHYSICS CALIBRATION CONSTANTS ---
+// ==========================================
+// LAYER 1: PHYSICS CALIBRATION (THE "WEIGHTS")
+// ==========================================
 
-const BASELINE_THERMAL_NOISE = -105; // dBm, roughly kTB at room temp for modest BW
+// CONSTANT: Baseline Thermal Noise (kTB)
+// Approx -174 dBm/Hz + 10log(BW). For 20MHz BW, approx -101 dBm.
+const THERMAL_NOISE_BASELINE = -105; 
 
-// Calibration constants for Environment Types (ITU-R P.372 based offsets)
-const ENV_FACTORS = {
-    [EnvironmentType.Urban]: { mean: 20, std: 6, desc: "High multipath, human-made noise" },
-    [EnvironmentType.Suburban]: { mean: 10, std: 4, desc: "Moderate multipath" },
-    [EnvironmentType.Rural]: { mean: 2, std: 2, desc: "Low noise, mostly thermal" },
-    [EnvironmentType.Maritime]: { mean: 5, std: 1.5, desc: "Surface reflections, low blocking" },
-    [EnvironmentType.Airborne]: { mean: -2, std: 1, desc: "Line-of-sight dominant" },
+// CALIBRATION: ITU-R P.372-14 Radio Noise
+// We inject these "weights" directly into the noise generator.
+// Urban = High man-made noise (Mean +20dB). Rural = Low noise.
+const ITU_R_NOISE_FIGURES = {
+    [EnvironmentType.Urban]: { mean_offset: 20, sigma: 6.0 },
+    [EnvironmentType.Suburban]: { mean_offset: 10, sigma: 4.0 },
+    [EnvironmentType.Rural]: { mean_offset: 2, sigma: 2.0 },
+    [EnvironmentType.Maritime]: { mean_offset: 5, sigma: 1.5 },
+    [EnvironmentType.Airborne]: { mean_offset: -2, sigma: 1.0 },
 };
 
-// Calibration for Interference Levels (Additive White Gaussian Noise scaler)
-const INTERFERENCE_FACTORS = {
-    [InterferenceLevel.Low]: { gain: 0, var_mult: 1.0 },
-    [InterferenceLevel.Medium]: { gain: 5, var_mult: 1.2 },
-    [InterferenceLevel.High]: { gain: 15, var_mult: 1.8 },
-    [InterferenceLevel.Severe]: { gain: 25, var_mult: 3.0 },
+// CALIBRATION: AWGN Entropy Scaling (Interference)
+// Simulates spectral crowding via variance multiplication.
+const AWGN_INTERFERENCE_SCALERS = {
+    [InterferenceLevel.Low]: { gain_db: 0, variance_multiplier: 1.0 },
+    [InterferenceLevel.Medium]: { gain_db: 5, variance_multiplier: 1.2 },
+    [InterferenceLevel.High]: { gain_db: 15, variance_multiplier: 1.8 },
+    [InterferenceLevel.Severe]: { gain_db: 25, variance_multiplier: 3.0 }, // Chaotic entropy
 };
 
-// Calibration for Atmospheric Attenuation (Simplified dB loss per step)
-const ATMOSPHERIC_LOSS = {
+// CALIBRATION: Atmospheric Attenuation Coefficients (Linear Loss)
+const ATMOSPHERIC_LOSS_DB = {
     [AtmosphericCondition.Clear]: 0,
-    [AtmosphericCondition.Rainy]: 2.5, // Attenuation due to scattering
+    [AtmosphericCondition.Rainy]: 2.5, // H2O Absorption
     [AtmosphericCondition.Foggy]: 0.5,
     [AtmosphericCondition.Snow]: 1.5,
 };
 
-// Propagation Model Exponents (n) for Path Loss L = 10*n*log(d)
-const PROPAGATION_EXPONENTS = {
-    [SignalPropagationModel.FreeSpace]: 2.0,
-    [SignalPropagationModel.Hata]: 3.5, // Approx for urban area
-    [SignalPropagationModel.LogDistance]: 3.0,
+// CALIBRATION: Path Loss Exponents (n)
+// Used in Log-Distance Equation: PL = P_tx - 10 * n * log10(d)
+const PATH_LOSS_EXPONENTS = {
+    [SignalPropagationModel.FreeSpace]: 2.0, // n=2 (Vacuum/LOS)
+    [SignalPropagationModel.Hata]: 3.5,      // n=3.5 (Urban Canyon / Hata Model)
+    [SignalPropagationModel.LogDistance]: 3.0, // n=3 (Generic Obstructed)
 };
 
 
-// --- 2. PROCEDURAL GENERATION FUNCTIONS (THE "MODEL") ---
+// ==========================================
+// LAYER 2: PROCEDURAL PHYSICS KERNELS
+// ==========================================
 
 /**
- * Generates the ambient noise floor tensor based on environmental physics.
- * Uses tf.randomNormal to create stochastic noise distributions.
+ * KERNEL: Ambient Noise Generator
+ * Implements: N(f) = Gaussian(Baseline + ITU_Offset + Int_Gain, Sigma * Int_Var)
  */
-const generateEnvironmentTensor = (
+const generateNoiseFloor = (
     environment: EnvironmentType, 
     interference: InterferenceLevel, 
     numPoints: number
 ): tf.Tensor => {
-    const env = ENV_FACTORS[environment];
-    const int = INTERFERENCE_FACTORS[interference];
+    // 1. Retrieve Calibration Constants
+    const envParams = ITU_R_NOISE_FIGURES[environment];
+    const intParams = AWGN_INTERFERENCE_SCALERS[interference];
 
-    // Calculate the Noise Figure (NF) based on environment
-    const noiseMean = BASELINE_THERMAL_NOISE + env.mean + int.gain;
-    const noiseStd = env.std * int.var_mult;
+    // 2. Calculate Statistical Moments
+    const mu = THERMAL_NOISE_BASELINE + envParams.mean_offset + intParams.gain_db;
+    const sigma = envParams.sigma * intParams.variance_multiplier;
 
-    // Operation: N = Gaussian(mu, sigma)
-    return tf.randomNormal([numPoints], noiseMean, noiseStd);
+    // 3. Generate Tensor on GPU
+    return tf.randomNormal([numPoints], mu, sigma);
 };
 
 /**
- * Simulates signal attenuation based on physics models.
+ * KERNEL: Propagation Physics Engine
+ * Implements: P_rx = P_tx - PathLoss - AtmLoss
+ * PathLoss derived from Log-Distance Model (Friis generalization).
  */
-const applyPropagationPhysics = (
-    basePower: number,
+const calculateReceivedPower = (
+    txPower: number,
     propModel: SignalPropagationModel,
     atmCond: AtmosphericCondition
 ): number => {
-    // Simulate a fixed distance "d" relative to emitter
-    // In a full simulator, d is variable. Here we assume an emitter at the edge of detection (d=100 units).
+    // Distance Simulation (d): In this demo, we assume a fixed emitter distance of 100m
     const d = 100; 
-    const n = PROPAGATION_EXPONENTS[propModel];
     
-    // Simplified Path Loss Calculation
-    // Path Loss (dB) = 10 * n * log10(d)
+    // 1. Get Path Loss Exponent (n)
+    const n = PATH_LOSS_EXPONENTS[propModel];
+    
+    // 2. Execute Log-Distance Equation
+    // PL(dB) = 10 * n * log10(d)
     const pathLoss = 10 * n * Math.log10(d);
     
-    // Atmospheric Loss
-    const atmLoss = ATMOSPHERIC_LOSS[atmCond];
+    // 3. Apply Atmospheric Attenuation
+    const atmLoss = ATMOSPHERIC_LOSS_DB[atmCond];
 
-    return basePower - (pathLoss * 0.1) - atmLoss; // Scaled for visualization range
+    // 4. Calculate Link Budget
+    // Scaling factor 0.5 applied for visual clarity on the graph relative to noise floor
+    return txPower - (pathLoss * 0.5) - atmLoss;
 };
 
 /**
- * Generates the specific attack vector signal tensor.
- * Defines the "Signature" of the threat using frequency-domain shaping.
+ * KERNEL: Signal Synthesis (Maxwell's Equations approximation)
+ * Generates waveform shapes (Sinc, Gaussian, Sinusoid) representing EM signatures.
  */
-const generateAttackVector = (
+const generateThreatSignature = (
     target: DeceptionTarget,
     freqAxis: tf.Tensor,
     params: SimulationParams,
     step: number
 ): { tensor: tf.Tensor, meta: any } | null => {
     
-    // 1. GPS SPOOFING (Narrowband CW)
+    // --- SCENARIO 1: GPS SPOOFING ---
+    // Physics: Narrowband Continuous Wave (CW) or Sinc Pulse at L1 Band
     if (target === DeceptionTarget.SIMULATE_GPS_SPOOFING) {
-        const centerFreq = 1575.42;
-        const bw = 2.0;
+        const centerFreq = 1575.42; // GPS L1 Center
+        const bw = 2.0; // MHz
         
-        // Shape: Sinc function or Narrow Gaussian approximates the main lobe of GPS L1
+        // 1. Create Frequency Mask (Bandpass Filter)
         const mask = tf.less(tf.abs(tf.sub(freqAxis, centerFreq)), bw);
         
-        // Physics: Calculate received power based on propagation model
-        const sourcePower = -60; // Emitter power
-        const rxPower = applyPropagationPhysics(
-            sourcePower, 
+        // 2. Calculate Power via Physics Model
+        const txPower = -60; // dBm (Spoofer is usually louder than real GPS @ -130)
+        const rxPower = calculateReceivedPower(
+            txPower, 
             params.environment.propagationModel, 
             params.environment.atmosphericCondition
         );
 
+        // 3. Synthesize Signal
         const signal = tf.mul(mask, tf.scalar(rxPower));
         
         return {
             tensor: signal,
             meta: {
-                desc: "Narrowband continuous wave detected at 1575.42 MHz. Deviation from expected satellite doppler curve.",
-                class: "GPS SPOOFING (L1)",
-                counter: "Switch to encrypted M-Code; Monitor IMU drift."
+                desc: "Narrowband CW detected at 1575.42 MHz (GPS L1). High-power anomaly indicates non-satellite origin.",
+                class: "GPS SPOOFING",
+                counter: "Monitor AGC levels; Verify P(Y) code authentication."
             }
         };
     }
 
-    // 2. ROGUE ACCESS POINT (Pulsed Wideband)
+    // --- SCENARIO 2: ROGUE WIFI AP ---
+    // Physics: DSSS/OFDM Waveform ~20MHz Wide in 2.4GHz Band
     if (target === DeceptionTarget.SIMULATE_ROGUE_WIFI_AP) {
-        const centerFreq = 2412;
-        const bw = 22; // 802.11 channel width
+        const centerFreq = 2412; // Channel 1
+        const bw = 22; // 802.11b/g bandwidth
         
         const mask = tf.less(tf.abs(tf.sub(freqAxis, centerFreq)), bw/2);
         
-        // Temporal Physics: Beacons occur ~100ms. We simulate pulsing by step modulo.
-        const isBeacon = (step % 2 === 0); 
-        if (!isBeacon) return null; // No signal this timestep
+        // Temporal Physics: Beacon Frames occur every ~102ms
+        // We simulate this "Pulsing" using the timestep modulo
+        const isBeaconFrame = (step % 2 === 0); 
+        if (!isBeaconFrame) return null; 
 
-        const sourcePower = -30;
-        const rxPower = applyPropagationPhysics(
-            sourcePower, 
+        const txPower = -30; // High power AP
+        const rxPower = calculateReceivedPower(
+            txPower, 
             params.environment.propagationModel, 
             params.environment.atmosphericCondition
         );
@@ -159,57 +176,59 @@ const generateAttackVector = (
         return {
             tensor: signal,
             meta: {
-                desc: "High-amplitude beacon frames on 2.4GHz Ch1. MAC address OUI mismatch.",
+                desc: "High-amplitude Beacon Frame pulsing on 2.4GHz Ch1. MAC OUI mismatch detected.",
                 class: "ROGUE AP",
-                counter: "Wireless Intrusion Prevention System (WIPS) containment."
+                counter: "Run WIPS triangulation; Deauth rogue clients."
             }
         };
     }
 
-    // 3. JAMMING (Wideband Gaussian)
+    // --- SCENARIO 3: JAMMING ---
+    // Physics: High Entropy Wideband Gaussian Noise
     if (target === DeceptionTarget.JAM_C2_DRONE_LINK) {
-        const centerFreq = 915;
+        const centerFreq = 915; // ISM Band
         const bw = 15;
         
         const mask = tf.less(tf.abs(tf.sub(freqAxis, centerFreq)), bw);
         
-        // Jamming is high entropy noise
-        const sourcePower = -20; // Very loud
-        const jammerNoise = tf.randomNormal(freqAxis.shape, sourcePower, 3); // High variance
-        const signal = tf.mul(mask, jammerNoise);
+        const txPower = -20; // Jammer is very loud
+        
+        // Generate Jitter (High Variance)
+        const jammerEntropy = tf.randomNormal(freqAxis.shape, txPower, 4.0); 
+        const signal = tf.mul(mask, jammerEntropy);
 
         return {
             tensor: signal,
             meta: {
-                desc: "High-entropy broadband noise floor elevation in ISM band.",
+                desc: "Broadband noise floor elevation (+25dB) in ISM band. Characteristic of barrage jamming.",
                 class: "C2 JAMMING",
-                counter: "Enable Frequency Hopping Spread Spectrum (FHSS)."
+                counter: "Switch to FHSS (Frequency Hopping); Geoloacte source."
             }
         };
     }
 
-    // 4. IOT DECOY TRAFFIC (Frequency Hopping)
+    // --- SCENARIO 4: IOT DECOY MESH ---
+    // Physics: Frequency Hopping Spread Spectrum (FHSS)
     if (target === DeceptionTarget.GENERATE_DECOY_IOT_TRAFFIC) {
         const numDevices = 5;
         let combinedSignal = tf.zerosLike(freqAxis);
         
-        // Physics: Multiple carriers hopping pseudorandomly
         for(let i=0; i<numDevices; i++) {
-            // Deterministic pseudo-randomness based on step + index
+            // Algorithm: Pseudo-random hopping based on Step + Device ID
             const hopOffset = Math.sin(step * (i+1)) * 10; 
             const centerFreq = 868 + hopOffset;
-            const mask = tf.less(tf.abs(tf.sub(freqAxis, centerFreq)), 0.2); // Narrow LoRa-like chirp
+            const mask = tf.less(tf.abs(tf.sub(freqAxis, centerFreq)), 0.2); // Narrow Chirp
             
-            const rxPower = -90 + (Math.random() * 5); // Variable signal strength
+            const rxPower = -90 + (Math.random() * 5); // Fluctuating power
             combinedSignal = tf.add(combinedSignal, tf.mul(mask, tf.scalar(rxPower)));
         }
         
         return {
             tensor: combinedSignal,
             meta: {
-                desc: "Multiple asynchronous chirps detected in sub-GHz band. Traffic pattern analysis suggests synthetic mesh.",
-                class: "IOT DECOY TRAFFIC",
-                counter: "Deep Packet Inspection (DPI) for payload validation."
+                desc: "Asynchronous LoRaWAN-style chirps detected. Traffic pattern consistent with synthetic mesh.",
+                class: "IOT DECOY",
+                counter: "Deep Packet Inspection (DPI) required."
             }
         };
     }
@@ -217,7 +236,9 @@ const generateAttackVector = (
     return null;
 };
 
-// --- 3. HEURISTIC NARRATIVE ENGINE ---
+// ==========================================
+// LAYER 3: HEURISTIC NARRATIVE ENGINE
+// ==========================================
 
 const generateNarrative = (
     step: number, 
@@ -226,51 +247,44 @@ const generateNarrative = (
     isAnalysis: boolean,
     params: SimulationParams
 ): string => {
-    const timeStr = `T+${step * 10}s`;
+    const timeStr = `T+${step * 10}ms`;
     let text = `## Timestep ${step + 1}\n\n`;
 
     if (isAnalysis) {
         text += `### OBSERVATION (${timeStr})\n`;
         if (anomalies.length > 0) {
             const a = anomalies[0];
-            text += `Processing of the input tensor reveals a 3-Sigma spectral anomaly at **${a.frequencyStart.toFixed(1)} MHz**. \n`;
-            text += `Signal power exceeds the calculated noise floor for the current environment configuration. \n`;
-            text += `**Analysis:** ${a.description}`;
+            text += `**ALERT:** 3-Sigma Anomaly Detected at **${a.frequencyStart.toFixed(1)} MHz**.\n`;
+            text += `Signal power exceeds calculated ${params.environment.type} noise floor statistics.\n`;
+            text += `**Assessment:** ${a.description}`;
         } else {
-            text += `Spectral scan nominal. Noise floor consistent with calibrated ${params.environment.type} baseline. No significant outliers detected in the Fast Fourier Transform (FFT) integration window.`;
+            text += `Spectrum nominal. Noise floor consistent with ITU-R P.372 baseline for ${params.environment.type}.`;
         }
     } else {
-        text += `### SITUATION\nSimulation Time: ${timeStr}. Environment: ${params.environment.type} (${params.environment.propagationModel}).\n\n`;
-        text += `### ACTION\n`;
+        text += `### SIMULATION LOG\nTime: ${timeStr} | Env: ${params.environment.type} | Model: ${params.environment.propagationModel}\n\n`;
         if (anomalies.length > 0) {
             const a = anomalies[0];
-            text += `**Red Team** active. Injecting ${a.classification} signature. \n`;
-            text += `Emitter parameters: Center Freq ~${((a.frequencyStart+a.frequencyEnd)/2).toFixed(1)} MHz. \n`;
+            text += `**injector:** Synthesizing ${a.classification} vector.\n`;
+            text += `**Physics:** Center Freq ~${((a.frequencyStart+a.frequencyEnd)/2).toFixed(1)} MHz | Waveform: ${a.classification === "JAMMING" ? "Gaussian" : "CW/Pulse"}.\n`;
         } else {
-            text += `**Red Team** holding patterns. Emitters silent. Monitoring propagation conditions.\n`;
-        }
-        
-        text += `\n### IMPACT\n`;
-        if (anomalies.length > 0) {
-            const a = anomalies[0];
-            text += `Target receiver sensitivity degraded. SNR drops below demodulation threshold. \n`;
-            text += `Recommended Action: **${a.countermeasure}**`;
-        } else {
-            text += `Spectrum clear. nominal C2 links maintained.`;
+            text += `**System:** Emitters silent. Monitoring propagation conditions.\n`;
         }
     }
 
     return text;
 };
 
-// --- 4. MAIN SERVICE EXPORT ---
+
+// ==========================================
+// LAYER 4: ORCHESTRATOR & ANOMALY DETECTION
+// ==========================================
 
 export const generateDeceptionScenario = async (
     params: SimulationParams,
     analysisContent?: string,
 ): Promise<AnalysisResult> => {
     
-    // tf.tidy automatically cleans up intermediate tensors from GPU memory
+    // tf.tidy executes the graph and then strictly deallocates GPU memory
     return tf.tidy(() => {
         const timesteps = params.timesteps;
         const result: AnalysisResult = {
@@ -285,13 +299,13 @@ export const generateDeceptionScenario = async (
             result.timeStats = fileReport?.timeStats;
         }
 
-        // Determine Frequency Domain
+        // Define Spectrum Bounds
         let fStart = 800, fEnd = 2500;
         if (fileReport) {
             fStart = fileReport.stats.frequency.min;
             fEnd = fileReport.stats.frequency.max;
         } else {
-            // Adjust range based on target to ensure visualization looks good
+            // Dynamic bounds based on target
             if (params.deceptionTarget === DeceptionTarget.SIMULATE_GPS_SPOOFING) { fStart = 1550; fEnd = 1600; }
             if (params.deceptionTarget === DeceptionTarget.SIMULATE_ROGUE_WIFI_AP) { fStart = 2400; fEnd = 2485; }
             if (params.deceptionTarget === DeceptionTarget.JAM_C2_DRONE_LINK) { fStart = 900; fEnd = 930; }
@@ -309,45 +323,39 @@ export const generateDeceptionScenario = async (
             let finalPowerTensor: tf.Tensor;
 
             if (fileReport) {
-                // --- ANALYSIS MODE (RECONSTRUCTION) ---
-                // 1. Generate base noise
-                const noise = generateEnvironmentTensor(EnvironmentType.Urban, InterferenceLevel.Medium, numPoints);
-                
-                // 2. Reconstruct Peaks from File Stats
+                // --- ANALYSIS MODE ---
+                // Reconstruct signal from file stats + noise
+                const noise = generateNoiseFloor(EnvironmentType.Urban, InterferenceLevel.Medium, numPoints);
                 let signal = tf.zerosLike(noise);
+                
+                // Reconstruction Logic
                 fileReport.samples.peakPowerRows.forEach(peak => {
-                    // Match freq within 1 MHz
                     const mask = tf.less(tf.abs(tf.sub(freqAxis, peak.frequency)), 1.0);
-                    // Reconstruct power relative to noise floor (-100)
                     const peakTensor = tf.mul(mask, tf.scalar(peak.power - (-100)));
                     signal = tf.add(signal, peakTensor);
                 });
 
-                // 3. Add Reconstruction Jitter
-                const jitter = tf.randomNormal([numPoints], 0, 2);
-                finalPowerTensor = tf.add(tf.add(noise, signal), jitter);
+                finalPowerTensor = tf.add(noise, signal);
 
             } else {
-                // --- SIMULATION MODE (GENERATION) ---
-                // 1. Generate Environment Noise Floor
-                const noise = generateEnvironmentTensor(params.environment.type, params.interference, numPoints);
+                // --- SIMULATION MODE ---
+                // 1. Generate Environment (ITU-R)
+                const noise = generateNoiseFloor(params.environment.type, params.interference, numPoints);
                 
-                // 2. Generate Attack Signal
-                const attack = generateAttackVector(params.deceptionTarget, freqAxis, params, t);
+                // 2. Generate Threat (Friis/Maxwell)
+                const attack = generateThreatSignature(params.deceptionTarget, freqAxis, params, t);
                 
+                // 3. Superposition
                 let combined = noise;
                 if (attack) {
-                    // Additive superposition of signals (Max hold visual approx)
-                    // We use a mask to mix them. Where signal exists, use signal + noise.
-                    const signalMask = tf.greater(attack.tensor, -120); // -120 is arbitrary cutoff
+                    const signalMask = tf.greater(attack.tensor, -120);
                     const signalWithNoise = tf.add(attack.tensor, noise);
-                    
                     combined = tf.where(signalMask, signalWithNoise, noise);
 
                     stepAnomalies.push({
                         description: attack.meta.desc,
-                        frequencyStart: (attack.meta.class === "GPS SPOOFING (L1)") ? 1574 : freqArray[0], 
-                        frequencyEnd: (attack.meta.class === "GPS SPOOFING (L1)") ? 1576 : freqArray[numPoints-1],
+                        frequencyStart: (attack.meta.class === "GPS SPOOFING") ? 1574 : freqArray[0], 
+                        frequencyEnd: (attack.meta.class === "GPS SPOOFING") ? 1576 : freqArray[numPoints-1],
                         classification: attack.meta.class,
                         countermeasure: attack.meta.counter
                     });
@@ -355,16 +363,13 @@ export const generateDeceptionScenario = async (
                 finalPowerTensor = combined;
             }
 
-            // --- ANOMALY DETECTION (STATISTICAL MOMENTS) ---
+            // --- 3-SIGMA ANOMALY DETECTION (STATISTICAL MOMENTS) ---
             if (fileReport) {
-                // Calculate Mean and StdDev of the tensor
                 const mean = finalPowerTensor.mean();
                 const std = tf.moments(finalPowerTensor).variance.sqrt();
                 
-                // Threshold = Mean + 3 * StdDev
+                // Threshold = Mean + 3*Sigma
                 const thresh = mean.add(std.mul(3));
-                
-                // Check Max Value
                 const maxVal = finalPowerTensor.max();
                 
                 if (maxVal.greater(thresh).dataSync()[0]) {
@@ -375,31 +380,20 @@ export const generateDeceptionScenario = async (
                         frequencyStart: freq - 0.5,
                         frequencyEnd: freq + 0.5,
                         classification: "STATISTICAL ANOMALY",
-                        countermeasure: "Investigate signal source."
+                        countermeasure: "Investigate source."
                     });
                 }
             }
 
-            // Prepare Data for React
+            // Extract Data for UI
             const powerArray = finalPowerTensor.dataSync();
             const spectrum: SpectrumDataPoint[] = [];
             for(let i=0; i<numPoints; i++) {
                 spectrum.push({ frequency: freqArray[i], power: powerArray[i] });
             }
 
-            // Add to results
-            fullScenarioText += generateNarrative(
-                t, 
-                stepAnomalies, 
-                params.deceptionTarget, 
-                !!fileReport, 
-                params
-            );
-            
-            result.visualizerData.push({
-                spectrum,
-                anomalies: stepAnomalies
-            });
+            fullScenarioText += generateNarrative(t, stepAnomalies, params.deceptionTarget, !!fileReport, params);
+            result.visualizerData.push({ spectrum, anomalies: stepAnomalies });
         }
 
         result.scenario = fullScenarioText;

@@ -2,11 +2,17 @@
 
 **PhantomBand** is a secure, air-gapped, client-side platform for Electronic Warfare (EW) training and Signals Intelligence (SIGINT) analysis.
 
-Unlike traditional AI wrappers, PhantomBand utilizes a **Generative Physics Model (PB-DSP-v1)** running entirely in the browser via TensorFlow.js. It procedurally generates mathematically accurate RF environments and detects anomalies using rigorous statistical analysis—without sending data to the cloud.
+### The Engine: PB-DSP-v1
+
+Instead of a traditional AI wrapper, we built **PB-DSP-v1 (PhantomBand Digital Signal Processing)**.
+
+*   **How is it trained?** It isn't trained on a dataset. It is **Calibrated via Domain Knowledge Injection**.
+*   We hard-coded **Maxwell’s Equations**, the **Friis Transmission Equation**, and **ITU-R International Noise Standards** directly into the TensorFlow graph.
+*   **Why is this better?** A neural network offers a *probability* of what a signal looks like. Our engine offers a *calculation*. It is **deterministic**. It cannot hallucinate a signal that violates the laws of physics.
 
 ---
 
-##  Getting Started
+## 🚀 Getting Started
 
 Follow these instructions to set up the project locally.
 
@@ -43,7 +49,7 @@ npm run build
 
 ---
 
-##  Technology Stack
+## 🛠️ Technology Stack
 
 PhantomBand is built on a modern, type-safe stack designed for high-performance client-side computation.
 
@@ -56,7 +62,7 @@ PhantomBand is built on a modern, type-safe stack designed for high-performance 
 
 ---
 
-##  Documentation Structure
+## 📚 Documentation Structure
 
 To keep information organized, documentation is split into two levels:
 
@@ -72,7 +78,7 @@ To keep information organized, documentation is split into two levels:
 
 ---
 
-##  Security & Privacy
+## 🛡️ Security & Privacy
 
 *   **Air-Gapped by Design**: All computations occur locally in the user's browser via WebGL.
 *   **Zero Data Exfiltration**: Uploaded CSV/TXT logs for analysis are parsed in memory and never transmitted to any external server.

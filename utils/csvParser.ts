@@ -12,6 +12,9 @@ export class ColumnDetectionError extends Error {
         this.name = 'ColumnDetectionError';
         this.headers = headers;
         this.sampleData = sampleData;
+        
+        // Restore prototype chain for instanceof checks
+        Object.setPrototypeOf(this, ColumnDetectionError.prototype);
     }
 }
 

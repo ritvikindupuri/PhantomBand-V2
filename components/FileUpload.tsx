@@ -230,7 +230,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileChange, onRunFileA
                     <ReportStat label="Avg Power (dBm)" value={analysisReport.stats.power.avg.toFixed(2)} />
                 </div>
                 <p className="text-xs text-text-secondary/70 mt-3 text-center">
-                    A summary of this data will be sent to the AI for analysis.
+                    A summary of this data will be sent to the Physics Engine for analysis.
                 </p>
             </div>
         );
