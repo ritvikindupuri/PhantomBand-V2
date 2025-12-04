@@ -1,96 +1,62 @@
-# PhantomBand V2: Deterministic RF Threat Simulation
+# PhantomBand: Tensor-Based RF Threat Modeling & Analysis Platform
 
-**PhantomBand** is a secure, air-gapped, client-side platform for Electronic Warfare (EW) training and Signals Intelligence (SIGINT) analysis.
+**PhantomBand is an advanced, client-side platform designed for military-grade electronic warfare (EW) training and signals intelligence (SIGINT) analysis.**
 
-### The Engine: PB-DSP-v1
-
-Instead of a traditional AI wrapper, we built **PB-DSP-v1 (PhantomBand Digital Signal Processing)**.
-
-*   **How is it trained?** It isn't trained on a dataset. It is **Calibrated via Domain Knowledge Injection**.
-*   We hard-coded **Maxwell’s Equations**, the **Friis Transmission Equation**, and **ITU-R International Noise Standards** directly into the TensorFlow graph.
-*   **Why is this better?** A neural network offers a *probability* of what a signal looks like. Our engine offers a *calculation*. It is **deterministic**. It cannot hallucinate a signal that violates the laws of physics.
+It functions as a high-fidelity **"digital adversary,"** utilizing **TensorFlow.js** to generate deterministic, physics-based Radio Frequency (RF) threat scenarios. Unlike probabilistic LLM-based tools, PhantomBand employs rigorous mathematical models to simulate signal propagation, interference, and spectral anomalies directly in the browser. It generates actionable intelligence, including automated threat classifications and suggested tactical countermeasures, creating an unparalleled environment for developing and mastering electronic warfare TTPs (Tactics, Techniques, and Procedures).
 
 ---
 
-##  Getting Started
+## Mission-Critical Capabilities
 
-Follow these instructions to set up the project locally.
+PhantomBand translates operator intent directly into high-fidelity physics simulations.
 
-### Prerequisites
-*   **Node.js**: Version 18.0.0 or higher
-*   **Package Manager**: npm (v9+) or yarn
+### 1. Physics-Based Scenario Generation (`Generate Scenario` Mode)
 
-### Installation
+This is the platform's "digital adversary" function, allowing operators to build complex training scenarios from the ground up using a client-side tensor engine.
 
-1.  **Clone the repository**
-    ```bash
-    git clone https://github.com/organization/phantom-band.git
-    cd phantom-band
-    ```
+#### How it Works:
+The operator defines the battlespace controls. When "Generate Simulation" is clicked, the **TensorFlow.js engine** executes a generative mathematical model. It computes noise floors based on environmental constants and injects mathematically defined signal patterns (Gaussian noise, pulsed sine waves, etc.) to represent specific threats.
 
-2.  **Install Dependencies**
-    ```bash
-    npm install
-    ```
-
-3.  **Start Development Server**
-    ```bash
-    npm run dev
-    ```
-    The application will launch automatically at `http://localhost:5173`.
-
-### Building for Production
-
-To create a production-ready build (outputs to `/dist`):
-
-```bash
-npm run build
-```
+#### Feature Breakdown:
+*   **Environment Modeling:** The Tensor engine mathematically models signal behavior.
+    *   `Environment Type` (e.g., *Urban*): Adjusts the mean and standard deviation of the Gaussian noise floor to simulate multipath fading and higher thermal noise.
+    *   `Interference Level`: Increases the variance of the random tensors, forcing the operator to find the threat within a statistically cluttered spectrum.
+*   **Threat Profile Configuration:**
+    *   `Deception Target` (e.g., *Simulate GPS Spoofing*): Triggers a specific generative function. For GPS, it generates a narrowband signal centered precisely at 1575.42 MHz, mathematically indistinguishable from a spoofing attack in a waterfall display.
+    *   `Jam C2 Drone Link`: Generates broadband high-energy noise centered on common ISM bands (915 MHz), simulating a denial-of-service attack.
 
 ---
 
-##  Technology Stack
+### 2. Statistical Data Analysis (`Analyze File` Mode)
 
-PhantomBand is built on a modern, type-safe stack designed for high-performance client-side computation.
+This is the "Signal Analyst" function, where PhantomBand ingests real-world data and performs statistical anomaly detection.
 
-*   **Core Physics Engine**: [TensorFlow.js](https://www.tensorflow.org/js) (WebGL-accelerated DSP)
-*   **Frontend Framework**: [React 18](https://react.dev/)
-*   **Language**: [TypeScript](https://www.typescriptlang.org/)
-*   **Build Tool**: [Vite](https://vitejs.dev/)
-*   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-*   **Visualization**: [Recharts](https://recharts.org/) (D3-based wrappers)
+#### How it Works:
+The operator uploads a RF data file. The application parses the data and loads it into **TensorFlow tensors**. It then performs moment analysis (calculating mean, variance, and standard deviation) to identify statistically significant outliers (e.g., >3 Sigma events). These mathematical findings are then mapped to a narrative template to explain the detected phenomena.
 
----
-
-##  Documentation Structure
-
-To keep information organized, documentation is split into two levels:
-
-1.  **README (This File)**: 
-    *   Focuses on **Deployment**, **Installation**, and **High-Level Usage**.
-    *   Intended for developers setting up the environment.
-
-2.  **[Technical Documentation (TECHNICAL_DOCUMENTATION.md)](./TECHNICAL_DOCUMENTATION.md)**: 
-    *   Focuses on **Physics Models**, **Architecture**, and **Math**.
-    *   Details the **PB-DSP-v1 Model** (Maxwell's Equations, Friis Transmission, ITU-R Standards).
-    *   Explains the 3-Sigma Anomaly Detection algorithm.
-    *   Intended for EW analysts and core engine contributors.
+#### Why it's a Game-Changer:
+*   **Zero Latency:** All analysis happens instantly on the client machine using WebGL acceleration.
+*   **Data Privacy:** No data is ever sent to a cloud API. Top-secret signal data remains air-gapped within the browser context.
+*   **Deterministic Output:** The analysis is based on hard math, not AI hallucination.
 
 ---
 
-##  Security & Privacy
+## Technology Stack
 
-*   **Air-Gapped by Design**: All computations occur locally in the user's browser via WebGL.
-*   **Zero Data Exfiltration**: Uploaded CSV/TXT logs for analysis are parsed in memory and never transmitted to any external server.
-
----
-
-## Author
-
-Created by **Ritvik Indupuri** - Cybersecurity Student at Purdue University.
+-   **Frontend:** React, TypeScript
+-   **Physics & Analysis Engine:** TensorFlow.js (`@tensorflow/tfjs`)
+-   **Styling:** Tailwind CSS
+-   **Data Visualization:** Recharts (Waterfall & FFT)
+-   **Client-Side Parsing:** In-house robust CSV/TXT parser
 
 ---
 
-## License
+## Analyst Workflow
 
-MIT License - For educational and defensive simulation purposes only.
+| Step                      | Action (Generate Scenario)                                                                         | Action (Analyze File)                                                                                                   | Outcome                                                                |
+| :------------------------ | :------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------- |
+| **1. CONFIGURE/UPLOAD**   | Select the "GENERATE SCENARIO" tab and set simulation parameters.                                    | Select the "ANALYZE FILE" tab and upload a `.csv`/`.txt` file.                                                          | The operational context is defined.                   |
+| **2. EXECUTE SIMULATION** | Click "GENERATE SIMULATION" to trigger the TensorFlow graph.                                       | Click "RUN TENSOR ANALYSIS" to load data into tensors and compute stats.                                                | A physics-compliant scenario or statistical report is generated. |
+| **3. ANALYZE & CORRELATE** | Use the timeline controls to scrub through the generated spectrum.                                 | Review the narrative generated from the statistical outliers found in your file.                                        | The "waterfall" chart and threat advisory update in perfect sync. |
+| **4. DEEP DIVE**          | Switch to the FFT view to analyze the frequency components generated by the tensor engine.         | Switch to the FFT view to conduct a deep analysis of the specific anomalies detected.                                   | Deeper insights into signal characteristics are revealed.                |
+| **5. EXPORT & BRIEF**     | Click "Download Report" to generate a comprehensive text file.                                     | Click "Download Report" to generate a report containing the statistical analysis of your file.                          | A complete after-action report is ready. |

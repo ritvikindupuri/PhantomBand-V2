@@ -1,4 +1,4 @@
-import type { FileAnalysisReport, SpectrumDataPoint } from '../types.ts';
+import type { FileAnalysisReport, SpectrumDataPoint } from '../types';
 
 /**
  * A custom error to signal that automatic column detection failed and manual selection is needed.
@@ -12,9 +12,6 @@ export class ColumnDetectionError extends Error {
         this.name = 'ColumnDetectionError';
         this.headers = headers;
         this.sampleData = sampleData;
-        
-        // Restore prototype chain for instanceof checks
-        Object.setPrototypeOf(this, ColumnDetectionError.prototype);
     }
 }
 

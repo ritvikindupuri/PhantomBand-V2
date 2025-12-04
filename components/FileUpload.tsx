@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FileCodeIcon } from './icons/FileCodeIcon.tsx';
-import type { FileAnalysisReport } from '../types.ts';
-import { MAX_FILE_SIZE_BYTES } from '../constants.ts';
-import { ColumnDetectionError } from '../utils/csvParser.ts';
+import { FileCodeIcon } from './icons/FileCodeIcon';
+import type { FileAnalysisReport } from '../types';
+import { MAX_FILE_SIZE_BYTES } from '../App';
+import { ColumnDetectionError } from '../utils/csvParser';
 
 
 type Segment = 'start' | 'middle' | 'end';
@@ -38,7 +38,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileChange, onRunFileA
 
 
   useEffect(() => {
-    // When a file is uploaded or error is cleared, reset manual selection
+    // When a new file is uploaded or the error is cleared, reset manual selection
     if (!analysisError || !uploadedFile) {
         setManualFreqIndex('');
         setManualPowerIndex('');
@@ -230,7 +230,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileChange, onRunFileA
                     <ReportStat label="Avg Power (dBm)" value={analysisReport.stats.power.avg.toFixed(2)} />
                 </div>
                 <p className="text-xs text-text-secondary/70 mt-3 text-center">
-                    A summary of this data will be sent to the Physics Engine for analysis.
+                    A summary of this data will be sent to the AI for analysis.
                 </p>
             </div>
         );

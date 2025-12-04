@@ -1,18 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Header } from './components/Header.tsx';
-import { SimulationControls } from './components/SimulationControls.tsx';
-import { DeceptionScenario } from './components/DeceptionScenario.tsx';
-import { DataVisualizer } from './components/DataVisualizer.tsx';
-import { StatusBar } from './components/StatusBar.tsx';
-import { HistoryPanel } from './components/HistoryPanel.tsx';
-import { Loader } from './components/Loader.tsx';
-import { SettingsIcon } from './components/icons/SettingsIcon.tsx';
-import { HistoryIcon } from './components/icons/HistoryIcon.tsx';
-import { generateDeceptionScenario } from './services/tfService.ts';
-import { parseAndAnalyzeCsv } from './utils/csvParser.ts';
-import { INITIAL_SIMULATION_PARAMS } from './constants.ts';
-import type { SimulationParams, AnalysisResult, HistoryItem, FileAnalysisReport, AnalysisMode, TimeStats } from './types.ts';
-import { DeceptionTarget } from './types.ts';
+import { Header } from './components/Header';
+import { SimulationControls } from './components/SimulationControls';
+import { DeceptionScenario } from './components/DeceptionScenario';
+import { DataVisualizer } from './components/DataVisualizer';
+import { StatusBar } from './components/StatusBar';
+import { HistoryPanel } from './components/HistoryPanel';
+import { Loader } from './components/Loader';
+import { SettingsIcon } from './components/icons/SettingsIcon';
+import { HistoryIcon } from './components/icons/HistoryIcon';
+// Switched to TensorFlow Service
+import { generateDeceptionScenario } from './services/tfService';
+import { parseAndAnalyzeCsv } from './utils/csvParser';
+import { INITIAL_SIMULATION_PARAMS } from './constants';
+import type { SimulationParams, AnalysisResult, HistoryItem, FileAnalysisReport, AnalysisMode, TimeStats } from './types';
+import { DeceptionTarget } from './types';
+
+// The maximum size of a file segment to analyze in memory.
+export const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 const App: React.FC = () => {
     const [params, setParams] = useState<SimulationParams>(INITIAL_SIMULATION_PARAMS);
@@ -51,7 +55,7 @@ const App: React.FC = () => {
             setFileAnalysisError(null);
             setTimeStats(null);
             // If the current target is the analysis one, revert to default
-            if (params.deceptionTarget === params.deceptionTarget && params.deceptionTarget === DeceptionTarget.ANALYZE_UPLOADED_DATA) {
+            if (params.deceptionTarget === DeceptionTarget.ANALYZE_UPLOADED_DATA) {
                 setParams(p => ({ ...p, deceptionTarget: INITIAL_SIMULATION_PARAMS.deceptionTarget }));
             }
         } else { // mode === 'analyze'
@@ -111,7 +115,6 @@ const App: React.FC = () => {
         // Wait a brief moment to allow UI to update to loading state before blocking main thread with TFjs
         setTimeout(async () => {
              try {
-                // Use the new TF service
                 const result = await generateDeceptionScenario(currentParams, analysisContent);
                 setAnalysisResult(result);
                 if (result.timeStats) {

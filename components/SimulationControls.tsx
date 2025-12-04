@@ -1,6 +1,8 @@
 import React from 'react';
-import { FileUpload } from './FileUpload.tsx';
+import { FileUpload } from './FileUpload';
+// Fix: Added .ts extension to module path.
 import type { SimulationParams, EnvironmentParams, FileAnalysisReport, AnalysisMode } from '../types.ts';
+// Fix: Added .ts extension to module path.
 import { EnvironmentType, InterferenceLevel, DeceptionTarget, SignalPropagationModel, AtmosphericCondition } from '../types.ts';
 
 interface SimulationControlsProps {
@@ -19,7 +21,7 @@ const SelectControl: React.FC<{
   label: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  options: string[]; 
+  options: string[]; // Changed from object to string array for easier filtering
   disabled?: boolean;
 }> = ({ label, value, onChange, options, disabled }) => (
   <div>
@@ -194,7 +196,7 @@ export const SimulationControls: React.FC<SimulationControlsProps> = ({
                           />
                           <span className="text-sm font-semibold text-primary-amber w-8 text-center bg-base-300 rounded-md py-1">{params.timesteps}</span>
                       </div>
-                      <p className="text-xs text-text-secondary/70 mt-2">Defines the number of narrative steps the Engine should generate to explain the data.</p>
+                      <p className="text-xs text-text-secondary/70 mt-2">Defines the number of narrative steps the AI should generate to explain the data.</p>
                   </div>
               </fieldset>
           </div>

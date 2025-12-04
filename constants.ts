@@ -1,3 +1,4 @@
+// Fix: Added .ts extension to module path.
 import { SimulationParams, EnvironmentType, InterferenceLevel, DeceptionTarget, SignalPropagationModel, AtmosphericCondition } from './types.ts';
 
 export const INITIAL_SIMULATION_PARAMS: SimulationParams = {
@@ -11,7 +12,3 @@ export const INITIAL_SIMULATION_PARAMS: SimulationParams = {
   timesteps: 5,
   customPrompt: '',
 };
-
-// The maximum size of a file segment to analyze in memory.
-// Moved here to prevent circular dependencies.
-export const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
