@@ -62,7 +62,7 @@ PhantomBand is built on a modern, type-safe stack designed for high-performance 
 
 ---
 
-## 📚 Documentation Structure
+##  Documentation Structure
 
 To keep information organized, documentation is split into two levels:
 
